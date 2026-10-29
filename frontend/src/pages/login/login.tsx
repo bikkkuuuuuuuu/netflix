@@ -115,7 +115,7 @@ const LogInPage = () => {
     <section className="min-h-screen bg-[#121316] flex flex-wrap">
       <div className="hidden lg:block lg:w-[62%] relative overflow-hidden">
         <img
-          src="https://assets.nflxext.com/ffe/siteui/vlv3/4263c437-c678-4724-ad80-e3ba0dc8761e/web/NP-en-20260921-TRIFECTA-perspective_b4f52aa2-b039-4413-816b-126355737e97_large.jpg"
+          src="/images/bg.png"
           alt="Featured content"
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -128,11 +128,7 @@ const LogInPage = () => {
         <div className="max-w-md mx-auto w-full">
           <div className="mb-8">
             <NavLink to="/" className="block mb-10 max-w-72">
-              <img
-                src="https://occ.a.nflxso.net/dnmt/api/v6/iL4oJVDYZ8KLSrJ6eG2OwtghbfQ/AAAAAdEhm1UzVexHjKqFOP9W6E2UVtkWFvL-vdxIEbTU81rsqNuPmDDy_dQvmQ85ath49JBruVV4aGQA3gY2Dl5SiqFf-AEwPAZBTNkW8FMxGXpDN2mHrf8KlRRiddj1P422ZW1eZkZNWLTd.svg"
-                alt="Netflix Logo"
-                className="h-10"
-              />
+              <img src="/images/logo.svg" alt="Netflix Logo" className="h-10" />
             </NavLink>
             <h4 className="mb-3 text-2xl font-semibold text-white ">
               Sign In to your Account

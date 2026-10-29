@@ -82,10 +82,10 @@ const SettingRow: React.FC<SettingRowProps> = ({
         </div>
 
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-white">{title}</h3>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
 
           {description && (
-            <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+            <p className="text-sm text-neutral-500  leading-relaxed">
               {description}
             </p>
           )}
@@ -106,8 +106,8 @@ const SectionHeader = ({
 }) => {
   return (
     <div className="mb-4">
-      <h2 className="text-lg font-bold text-white tracking-tight">{title}</h2>
-      <p className="text-xs text-neutral-500 mt-1">{description}</p>
+      <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+      <p className="text-lg text-neutral-500 mt-1">{description}</p>
     </div>
   );
 };
@@ -170,8 +170,8 @@ export default function SettingsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div>
-              <h1 className="text-2xl md:text-3xl font-black ">Settings</h1>
-              <p className="text-sm text-neutral-500 mt-1">
+              <h1 className="text-2xl md:text-5xl font-medium ">Settings</h1>
+              <p className="text-lg text-neutral-500 mt-1">
                 Manage your account and streaming preferences
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-3">
                         <Icon className="h-4 w-4" />
 
-                        <span className="text-sm font-semibold">
+                        <span className="text-lg font-semibold">
                           {section.label}
                         </span>
                       </div>
@@ -220,9 +220,9 @@ export default function SettingsPage() {
                   />
 
                   <div className="min-w-0">
-                    <p className="text-sm font-bold truncate">Bikash Pandey</p>
+                    <p className="text-lg font-bold truncate">Bikash Pandey</p>
 
-                    <p className="text-[10px] text-neutral-500 truncate">
+                    <p className="text-md text-neutral-500 truncate">
                       bikash@example.com
                     </p>
                   </div>
@@ -260,13 +260,13 @@ export default function SettingsPage() {
                               Bikash Pandey
                             </h3>
 
-                            <p className="text-xs text-neutral-500 mt-1">
+                            <p className="text-sm text-neutral-500 mt-1">
                               Free account
                             </p>
                           </div>
                         </div>
 
-                        <button className="px-4 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-neutral-200 transition-colors">
+                        <button className="px-4 py-2.5 rounded-xl bg-white text-black text-sm font-bold hover:bg-neutral-200 transition-colors">
                           Edit Profile
                         </button>
                       </div>
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                       title="Email address"
                       description="bikash@example.com"
                     >
-                      <button className="text-xs font-semibold text-neutral-400 hover:text-white">
+                      <button className="text-sm font-semibold text-neutral-400 hover:text-white">
                         Change
                       </button>
                     </SettingRow>
@@ -289,7 +289,7 @@ export default function SettingsPage() {
                       title="Password"
                       description="Last changed 3 months ago"
                     >
-                      <button className="text-xs font-semibold text-neutral-400 hover:text-white">
+                      <button className="text-sm font-semibold text-neutral-400 hover:text-white">
                         Change
                       </button>
                     </SettingRow>
@@ -363,7 +363,7 @@ export default function SettingsPage() {
 
                   {/* Quality */}
                   <div className="p-6 border-t border-white/[0.06]">
-                    <h3 className="text-sm font-bold text-white mb-3">
+                    <h3 className="text-lg font-bold text-white mb-3">
                       Streaming Quality
                     </h3>
 
@@ -378,10 +378,10 @@ export default function SettingsPage() {
                                 : "bg-[#121316] border-white/[0.06] text-neutral-400 hover:text-white hover:border-white/20"
                             }`}
                           >
-                            <div className="text-xs font-bold">{quality}</div>
+                            <div className="text-sm font-bold">{quality}</div>
 
                             <div
-                              className={`text-[10px] mt-1 ${
+                              className={`text-md mt-1 ${
                                 index === 0
                                   ? "text-neutral-600"
                                   : "text-neutral-600"
@@ -408,7 +408,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="p-6">
-                    <h3 className="text-sm font-bold mb-3">Theme</h3>
+                    <h3 className="text-lg font-bold mb-3">Theme</h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <button className="rounded-2xl border-2 border-white bg-[#121316] p-3 text-left">
@@ -423,7 +423,7 @@ export default function SettingsPage() {
 
                         <div className="flex items-center gap-2 mt-3">
                           <Check className="h-4 w-4" />
-                          <span className="text-xs font-bold">Dark</span>
+                          <span className="text-sm font-bold">Dark</span>
                         </div>
                       </button>
 
@@ -439,7 +439,7 @@ export default function SettingsPage() {
 
                         <div className="flex items-center gap-2 mt-3">
                           <Moon className="h-4 w-4 text-neutral-500" />
-                          <span className="text-xs font-bold text-neutral-400">
+                          <span className="text-sm font-bold text-neutral-400">
                             Light
                           </span>
                         </div>
@@ -457,7 +457,7 @@ export default function SettingsPage() {
 
                         <div className="flex items-center gap-2 mt-3">
                           <Monitor className="h-4 w-4 text-neutral-500" />
-                          <span className="text-xs font-bold text-neutral-400">
+                          <span className="text-sm font-bold text-neutral-400">
                             System
                           </span>
                         </div>
@@ -496,7 +496,7 @@ export default function SettingsPage() {
                       title="Display language"
                       description="Language used throughout the application."
                     >
-                      <select className="bg-[#121316] border border-white/10 text-white text-xs rounded-xl px-3 py-2 outline-none">
+                      <select className="bg-[#121316] border border-white/10 text-white text-sm rounded-xl px-3 py-2 outline-none">
                         <option>English</option>
                         <option>Nepali</option>
                         <option>Spanish</option>
@@ -509,7 +509,7 @@ export default function SettingsPage() {
                       title="Audio language"
                       description="Preferred audio language for movies."
                     >
-                      <select className="bg-[#121316] border border-white/10 text-white text-xs rounded-xl px-3 py-2 outline-none">
+                      <select className="bg-[#121316] border border-white/10 text-white text-sm rounded-xl px-3 py-2 outline-none">
                         <option>English</option>
                         <option>Nepali</option>
                         <option>Spanish</option>
@@ -614,16 +614,16 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="flex-1">
-                          <h3 className="text-sm font-bold text-white">
+                          <h3 className="text-lg font-bold text-white">
                             Delete account
                           </h3>
 
-                          <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                          <p className="text-sm text-neutral-500 mt-1 leading-relaxed">
                             Permanently delete your account, profile, watch
                             history and preferences.
                           </p>
 
-                          <button className="mt-4 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors">
+                          <button className="mt-4 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold hover:bg-red-500/20 transition-colors">
                             Delete Account
                           </button>
                         </div>
@@ -650,11 +650,11 @@ export default function SettingsPage() {
 
                       <div className="relative">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                          <span className="text-md font-black uppercase tracking-[0.2em]">
                             Current Plan
                           </span>
 
-                          <span className="px-3 py-1 rounded-full bg-black text-white text-[10px] font-bold">
+                          <span className="px-3 py-1 rounded-full bg-black text-white text-md font-bold">
                             FREE
                           </span>
                         </div>
@@ -663,7 +663,7 @@ export default function SettingsPage() {
                           Free
                         </h2>
 
-                        <p className="text-xs text-black/50 mt-1">
+                        <p className="text-sm text-black/50 mt-1">
                           Enjoy your favorite movies and shows.
                         </p>
 
@@ -679,14 +679,14 @@ export default function SettingsPage() {
                               className="rounded-xl bg-black/[0.05] p-3"
                             >
                               <Check className="h-3.5 w-3.5 mb-2" />
-                              <span className="text-[10px] font-bold">
+                              <span className="text-md font-bold">
                                 {feature}
                               </span>
                             </div>
                           ))}
                         </div>
 
-                        <button className="mt-6 px-5 py-3 rounded-xl bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-colors">
+                        <button className="mt-6 px-5 py-3 rounded-xl bg-black text-white text-sm font-bold hover:bg-neutral-800 transition-colors">
                           Explore Plans
                         </button>
                       </div>
@@ -716,12 +716,12 @@ export default function SettingsPage() {
 
             {/* Bottom actions */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-5 px-1">
-              <button className="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-white transition-colors">
+              <button className="flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-white transition-colors">
                 <LogOut className="h-4 w-4" />
                 Sign out of all devices
               </button>
 
-              <p className="text-[10px] text-neutral-600">
+              <p className="text-md text-neutral-600">
                 Changes are saved automatically
               </p>
             </div>

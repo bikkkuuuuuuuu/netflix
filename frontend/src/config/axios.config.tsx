@@ -3,7 +3,7 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_API_URL,
-  timeout: 30000,
+  timeout: 300000,
   timeoutErrorMessage: "Server timeout, please try again later.",
   headers: {
     "Content-Type": "application/json",

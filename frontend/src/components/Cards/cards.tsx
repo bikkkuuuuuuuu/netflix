@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Play, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -22,7 +22,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect }) => {
   return (
     <div
       onClick={() => onSelect(movie)}
-      className="group relative cursor-pointer overflow-hidden rounded-[28px] bg-neutral-900 transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl hover:shadow-purple-500/10 focus:outline-none focus:ring-2 focus:ring-white/20 aspect-[3/4] flex flex-col justify-end p-5 sm:p-6 select-none"
+      className="group relative cursor-pointer overflow-hidden rounded-[28px] bg-neutral-900 transition-all duration-500  hover:shadow-purple-500/10 focus:outline-none focus:ring-2 focus:ring-white/20 aspect-[3/4] flex flex-col justify-end p-5 sm:p-6 select-none"
     >
       {/* Poster Image Background */}
       <img

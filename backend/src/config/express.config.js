@@ -8,6 +8,7 @@ const logger = require("../core/logger");
 const { requestLogger } = require("../middlewares/logger.middleware");
 const { connectRedis } = require("./redis.config.js");
 const rateLimiter = require("../middlewares/rateLimiter.middleware.js");
+const path = require("node:path");
 // const { connectRabbitMq, consumeFromQueue } = require("./rabbitmq.config.js");
 
 const app = express();
@@ -22,6 +23,7 @@ const app = express();
 // };
 // startRabbitMq();
 
+const publicDir = path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
 app.use(requestLogger);
 
 connectRedis();
@@ -51,6 +53,23 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/v1", apiRouter);
 
+app.use("/movies/:id/images", (req, res, next) => {
+  const movieDir = path.join(publicDir, "movies", req.params.id, "images");
+
+  express.static(movieDir, {
+    index: false,
+    dotfiles: "deny",
+  })(req, res, next);
+});
+
+app.use("/movies/:id/hls", (req, res, next) => {
+  const movieDir = path.join(publicDir, "movies", req.params.id, "hls");
+
+  express.static(movieDir, {
+    index: false,
+    dotfiles: "deny",
+  })(req, res, next);
+});
 app.get("*name", (_req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });

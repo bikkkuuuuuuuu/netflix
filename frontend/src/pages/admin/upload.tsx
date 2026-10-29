@@ -1,30 +1,31 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import {
-  Home,
-  Film,
-  Tv,
-  Settings,
-  Upload,
-  Plus,
-  Check,
-  Trash2,
   FileText,
   Video,
-  Image as ImageIcon,
-  Sparkles,
+  Upload,
+  Trash2,
   Layers,
-  FolderPlus,
-  Star,
-  Clock,
+  Plus,
   X,
-  SlidersHorizontal,
   HardDrive,
-  BarChart3,
-  CheckCircle2,
-  AlertCircle,
-  Play,
-  Maximize2,
+  Image,
+  LoaderCircle,
 } from "lucide-react";
+
+import {
+  InputType,
+  TextAreaField,
+  TextInputField,
+  SelectField,
+  ImageUploader,
+  MovieUploader,
+} from "@/components/formFields";
+
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import movieSvc from "@/services/movie.service";
+import toast from "react-hot-toast";
 
 interface DraftItem {
   id: string;
@@ -35,49 +36,35 @@ interface DraftItem {
   status: "Draft" | "Uploading" | "Ready";
 }
 
-interface ActivityItem {
-  id: string;
-  title: string;
-  action: string;
-  time: string;
-  status: "success" | "pending";
-}
+const MovieDTO = Yup.object({
+  title: Yup.string().trim().required("Title is required"),
+  releaseYear: Yup.string().required("Release year is required"),
+  description: Yup.string().required("Description is required"),
+  mediaType: Yup.string(),
+  genre: Yup.string(),
+  maturity: Yup.string(),
+  imdbRating: Yup.string(),
+  backdrop: Yup.mixed().nullable(),
+  poster: Yup.mixed().nullable(),
+  video: Yup.mixed<File>()
+    .required("Source video is required")
+    .test(
+      "video-file",
+      "Choose an MP4 or MKV video.",
+      (value) => value instanceof File && /\.(mp4|mkv)$/i.test(value.name),
+    ),
+});
 
 export default function AdminUpload() {
-  const [activeNav, setActiveNav] = useState("upload");
   const [activeTab, setActiveTab] = useState<"new" | "manage">("new");
-  const [notification, setNotification] = useState<string | null>(null);
 
-  // Form State
-  const [title, setTitle] = useState("");
-  const [mediaType, setMediaType] = useState<"Movie" | "TV Show" | "Anime">(
-    "Movie",
-  );
-  const [genre, setGenre] = useState("Sci-Fi");
-  const [year, setYear] = useState("2026");
-  const [imdbRating, setImdbRating] = useState("8.5");
-  const [maturity, setMaturity] = useState("PG-13");
-  const [description, setDescription] = useState("");
-  const [castInput, setCastInput] = useState("");
-  const [castList, setCastList] = useState<string[]>([
-    "Timothée Chalamet",
-    "Zendaya",
-  ]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Tech Specs State
-  const [is4K, setIs4K] = useState(true);
-  const [isHDR, setIsHDR] = useState(true);
-  const [isDolby, setIsDolby] = useState(true);
-
-  // Simulated File Upload State
-  const [uploadProgress, setUploadProgress] = useState(78);
-  const [isSimulatingUpload, setIsSimulatingUpload] = useState(false);
-
-  // Draft items in right light panel
   const [drafts, setDrafts] = useState<DraftItem[]>([
     {
       id: "d-1",
-      title: "Dune: Part Two (4K IMAX)",
+      title: "Dune: Part Two",
       type: "Movie",
       size: "14.2 GB",
       progress: 100,
@@ -85,7 +72,7 @@ export default function AdminUpload() {
     },
     {
       id: "d-2",
-      title: "Severance Season 2 Ep 1",
+      title: "Severance — Season 2",
       type: "TV Show",
       size: "3.8 GB",
       progress: 45,
@@ -93,7 +80,7 @@ export default function AdminUpload() {
     },
     {
       id: "d-3",
-      title: "Cyberpunk: Edgerunners S2",
+      title: "Cyberpunk: Edgerunners",
       type: "TV Show",
       size: "2.1 GB",
       progress: 0,
@@ -101,506 +88,686 @@ export default function AdminUpload() {
     },
   ]);
 
-  // Activity Feed
-  const [activity, setActivity] = useState<ActivityItem[]>([
-    {
-      id: "a-1",
-      title: "Interstellar",
-      action: "Published to Catalog",
-      time: "10 mins ago",
-      status: "success",
-    },
-    {
-      id: "a-2",
-      title: "The Batman",
-      action: "Transcoding 4K Stream",
-      time: "25 mins ago",
-      status: "pending",
-    },
-    {
-      id: "a-3",
-      title: "Blade Runner 2049",
-      action: "Metadata Updated",
-      time: "1 hour ago",
-      status: "success",
-    },
+  const [castInput, setCastInput] = useState("");
+
+  const [castList, setCastList] = useState<string[]>([
+    "Timothée Chalamet",
+    "Zendaya",
   ]);
 
-  // Toast Helper
-  const showToast = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(MovieDTO),
+    defaultValues: {
+      title: "",
+      year: "",
+      description: "",
+      mediaType: "Movie",
+      genre: "Sci-Fi",
+      maturity: "PG-13",
+      imdbRating: "",
+      backdrop: null,
+      poster: null,
+      video: null,
+    },
+  });
+
+  const showToast = (message: string) => {
+    console.log(message);
   };
 
   const addCastMember = () => {
-    if (castInput.trim() && !castList.includes(castInput.trim())) {
-      setCastList([...castList, castInput.trim()]);
-      setCastInput("");
-      showToast("Cast member added");
+    const name = castInput.trim();
+
+    if (!name || castList.includes(name)) {
+      return;
     }
+
+    setCastList((current) => [...current, name]);
+    setCastInput("");
   };
 
   const removeCastMember = (name: string) => {
-    setCastList(castList.filter((item) => item !== name));
+    setCastList((current) => current.filter((actor) => actor !== name));
   };
 
-  const handlePublish = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      showToast("Please enter a title for the media");
-      return;
-    }
-    showToast(`Successfully published "${title}" to Catalog!`);
-    setTitle("");
-    setDescription("");
-  };
+  const simulateUpload = () => {
+    if (isUploading) return;
 
-  const startSimulatedUpload = () => {
-    setIsSimulatingUpload(true);
-    setUploadProgress(10);
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsSimulatingUpload(false);
-          showToast("Video file encoding complete!");
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const interval = window.setInterval(() => {
+      setUploadProgress((current) => {
+        if (current >= 100) {
+          window.clearInterval(interval);
+          setIsUploading(false);
           return 100;
         }
-        return prev + 15;
+
+        return Math.min(current + 10, 100);
       });
-    }, 400);
+    }, 350);
+  };
+  const submitForm = async (data: any) => {
+    const formData = new FormData();
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (value !== null && value !== undefined) {
+        formData.append(
+          key,
+          typeof value === "object" ? JSON.stringify(value) : String(value),
+        );
+      }
+    });
+    setIsUploading(true);
+    setUploadProgress(0);
+    try {
+      const response = await movieSvc.create(formData, {
+        onProgress: setUploadProgress,
+      });
+      console.log(response);
+      setUploadProgress(100);
+      if (response?.status === "MOVIE_CREATE_SUCCESS") {
+        toast.success("Movie uploaded successfully");
+      }
+    } catch (exception) {
+      console.log(exception);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar pr-1">
-      {/* HEADER & TAB CONTROL BAR */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#121316]/80 p-3 rounded-2xl ">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-red-600/20 text-red-500 rounded-xl border border-red-500/30">
-            <FolderPlus className="w-5 h-5" />
-          </div>
+    <div
+      className="flex-1 overflow-y-auto text-white no-scrollbar"
+      style={{
+        scrollbarWidth: "none",
+      }}
+    >
+      <div className="mx-auto w-full max-w-[1600px] space-y-4">
+        {/* Header */}
+        <header className="flex flex-col gap-4 rounded-3xl bg-[#121316] p-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-sm font-bold text-white tracking-wide">
-              Studio Management Studio
-            </h2>
-            <p className="text-[11px] text-neutral-400">
-              Upload high-bitrate video streams & catalog metadata
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04]">
+                <Video className="h-4 w-4 text-neutral-300" />
+              </div>
+
+              <div>
+                <h1 className="text-sm font-semibold tracking-tight text-white">
+                  Upload Studio
+                </h1>
+
+                <p className="mt-0.5 text-sm text-neutral-500">
+                  Add titles, artwork and source media to your catalog.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Mode Tabs */}
-        <div className="flex items-center gap-1.5 bg-[#1a1c23] p-1 rounded-xl ">
-          <button
-            onClick={() => setActiveTab("new")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === "new"
-                ? "bg-red-600 text-white shadow-lg shadow-red-900/40"
-                : "text-neutral-400 hover:text-white"
-            }`}
+          <div className="flex items-center rounded-xl bg-[#0f1012] p-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("new")}
+              className={`rounded-lg px-4 py-2 text-xs font-medium transition ${
+                activeTab === "new"
+                  ? "bg-white/[0.08] text-white"
+                  : "text-neutral-500 hover:text-neutral-300"
+              }`}
+            >
+              New Upload
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("manage")}
+              className={`rounded-lg px-4 py-2 text-xs font-medium transition ${
+                activeTab === "manage"
+                  ? "bg-white/[0.08] text-white"
+                  : "text-neutral-500 hover:text-neutral-300"
+              }`}
+            >
+              Library
+            </button>
+          </div>
+        </header>
+
+        {/* Main */}
+        {activeTab === "new" && (
+          <form
+            onSubmit={handleSubmit(submitForm)}
+            className="grid grid-cols-1 gap-4 xl:grid-cols-12"
           >
-            Upload New Media
-          </button>
-          <button
-            onClick={() => setActiveTab("manage")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === "manage"
-                ? "bg-red-600 text-white shadow-lg shadow-red-900/40"
-                : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            Manage Library
-          </button>
-        </div>
-      </div>
+            {/* LEFT */}
+            <div className="space-y-4 xl:col-span-8">
+              {/* Metadata */}
+              <section className="rounded-3xl bg-[#121316] p-5">
+                <div className="mb-5 flex items-center gap-3 border-b border-white/[0.06] pb-4">
+                  <FileText className="h-4 w-4 text-neutral-400" />
 
-      {/* TOP SECTION: FORM INPUT (8 COLS) + QUEUE DRAFTS (4 COLS) */}
-      {}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* LEFT (8 COLS): MAIN EDIT FORM PANEL */}
-        <div className="lg:col-span-8 bg-[#121316] rounded-[30px] p-5 md:p-6 shadow-xl  flex flex-col justify-between">
-          <form onSubmit={handlePublish} className="flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-red-500" />
-                <span>General Metadata</span>
-              </h3>
-              <span className="text-[10px] text-neutral-400 uppercase font-semibold tracking-wider">
-                Step 1 of 2
-              </span>
-            </div>
-
-            {/* Title & Type */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2 flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Dune: Part Two"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#1a1c23] text-xs font-semibold text-white placeholder-neutral-600 px-4 py-3 rounded-xl  outline-none focus:border-red-500/50 transition-colors"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Media Format
-                </label>
-                <select
-                  value={mediaType}
-                  onChange={(e: any) => setMediaType(e.target.value)}
-                  className="w-full bg-[#1a1c23] text-xs font-semibold text-white px-4 py-3 rounded-xl  outline-none focus:border-red-500/50 transition-colors cursor-pointer"
-                >
-                  <option value="Movie">Movie (Feature Film)</option>
-                  <option value="TV Show">TV Show (Series)</option>
-                  <option value="Anime">Anime Series</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Genre, Year, Rating, Maturity */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Genre
-                </label>
-                <select
-                  value={genre}
-                  onChange={(e) => setGenre(e.target.value)}
-                  className="w-full bg-[#1a1c23] text-xs font-semibold text-white px-3 py-3 rounded-xl  outline-none focus:border-red-500/50 cursor-pointer"
-                >
-                  <option>Sci-Fi</option>
-                  <option>Action</option>
-                  <option>Drama</option>
-                  <option>Thriller</option>
-                  <option>Comedy</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Release Year
-                </label>
-                <input
-                  type="text"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="w-full bg-[#1a1c23] text-xs font-semibold text-white px-3 py-3 rounded-xl  outline-none focus:border-red-500/50"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  IMDb Score
-                </label>
-                <input
-                  type="text"
-                  value={imdbRating}
-                  onChange={(e) => setImdbRating(e.target.value)}
-                  className="w-full bg-[#1a1c23] text-xs font-semibold text-amber-400 px-3 py-3 rounded-xl  outline-none focus:border-red-500/50"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Maturity Badge
-                </label>
-                <select
-                  value={maturity}
-                  onChange={(e) => setMaturity(e.target.value)}
-                  className="w-full bg-[#1a1c23] text-xs font-semibold text-white px-3 py-3 rounded-xl  outline-none focus:border-red-500/50 cursor-pointer"
-                >
-                  <option>PG-13</option>
-                  <option>R (18+)</option>
-                  <option>TV-MA</option>
-                  <option>PG</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Description Textarea */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                Synopsis / Summary
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Enter detailed plot synopsis..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-[#1a1c23] text-xs font-medium text-white placeholder-neutral-600 p-3.5 rounded-xl  outline-none focus:border-red-500/50 resize-none"
-              />
-            </div>
-
-            {/* Submit Controls */}
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => showToast("Saved to Draft Queue")}
-                className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-bold transition-all "
-              >
-                Save as Draft
-              </button>
-
-              <button
-                type="submit"
-                className="px-8 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-lg shadow-red-900/50 flex items-center gap-2 transform active:scale-95"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Publish Title Immediately</span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* RIGHT (4 COLS): LIGHT DRAFTS & QUEUE PANEL */}
-        {}
-        <div className="lg:col-span-4 bg-[#e9ecee] rounded-[30px] p-5 flex flex-col justify-between shadow-md border border-white/80 text-neutral-800">
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-neutral-900 tracking-tight flex items-center gap-2">
-                <Layers className="w-4 h-4 text-red-600" />
-                <span>Upload Queue & Drafts</span>
-              </h3>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-neutral-300 text-neutral-700 px-2.5 py-1 rounded-full">
-                {drafts.length} Pending
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-2.5 overflow-y-auto max-h-[310px] pr-1 no-scrollbar">
-              {drafts.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3 rounded-2xl bg-white shadow-sm border border-black/5 flex flex-col gap-2"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold text-neutral-900 leading-tight">
-                        {item.title}
-                      </h4>
-                      <span className="text-[10px] font-semibold text-neutral-500 block mt-0.5">
-                        {item.type} • {item.size}
-                      </span>
-                    </div>
-                    <span
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        item.status === "Ready"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : item.status === "Uploading"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-neutral-200 text-neutral-700"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">
+                      General information
+                    </h2>
                   </div>
+                </div>
 
-                  {/* Mini Progress Bar */}
-                  {item.progress < 100 && (
-                    <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-red-600 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${item.progress}%` }}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="md:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                        Title
+                      </label>
+
+                      <TextInputField
+                        type={InputType.TEXT}
+                        name="title"
+                        control={control}
+                        placeholder="Dune: Part Two"
+                        errMsg={errors.title?.message as string}
                       />
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
-                    <button
-                      onClick={() => {
-                        setDrafts(drafts.filter((d) => d.id !== item.id));
-                        showToast(`Removed "${item.title}"`);
-                      }}
-                      className="text-[11px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      <span>Discard</span>
-                    </button>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                        Format
+                      </label>
 
-                    <button
-                      onClick={() => showToast(`Pushed "${item.title}" live!`)}
-                      className="text-[11px] font-bold text-neutral-900 hover:text-black"
-                    >
-                      Push Live →
-                    </button>
+                      <SelectField
+                        name="mediaType"
+                        control={control}
+                        options={[
+                          {
+                            value: "Movie",
+                            label: "Movie",
+                          },
+                          {
+                            value: "TV Show",
+                            label: "TV Show",
+                          },
+                          {
+                            value: "Anime",
+                            label: "Anime",
+                          },
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                        Genre
+                      </label>
+
+                      <SelectField
+                        name="genre"
+                        control={control}
+                        options={[
+                          {
+                            value: "Sci-Fi",
+                            label: "Sci-Fi",
+                          },
+                          {
+                            value: "Action",
+                            label: "Action",
+                          },
+                          {
+                            value: "Drama",
+                            label: "Drama",
+                          },
+                          {
+                            value: "Thriller",
+                            label: "Thriller",
+                          },
+                          {
+                            value: "Comedy",
+                            label: "Comedy",
+                          },
+                        ]}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                        Release year
+                      </label>
+
+                      <TextInputField
+                        type={InputType.TEXT}
+                        name="releaseYear"
+                        control={control}
+                        placeholder="2026"
+                        errMsg={errors.releaseYear?.message as string}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                        IMDb
+                      </label>
+
+                      <TextInputField
+                        type={InputType.TEXT}
+                        name="imdbRating"
+                        control={control}
+                        placeholder="8.5"
+                        errMsg=""
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                        Rating
+                      </label>
+
+                      <SelectField
+                        name="maturity"
+                        control={control}
+                        options={[
+                          {
+                            value: "G",
+                            label: "G",
+                          },
+                          {
+                            value: "PG",
+                            label: "PG",
+                          },
+                          {
+                            value: "PG-13",
+                            label: "PG-13",
+                          },
+                          {
+                            value: "R",
+                            label: "R",
+                          },
+                          {
+                            value: "TV-MA",
+                            label: "TV-MA",
+                          },
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium uppercase tracking-[0.08em] text-neutral-400">
+                      Synopsis
+                    </label>
+
+                    <TextAreaField
+                      name="description"
+                      control={control}
+                      placeholder="Write a concise description of the title..."
+                      rows={5}
+                      errMsg={errors.description?.message as string}
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </section>
 
-          {/* Bulk Action */}
-          <button
-            onClick={() => showToast("Publishing all ready drafts...")}
-            className="w-full mt-4 py-3.5 rounded-full bg-[#121316] text-white text-xs font-bold tracking-wider uppercase hover:bg-neutral-800 transition-colors shadow-md active:scale-95"
-          >
-            Publish All Ready Items
-          </button>
-        </div>
-      </div>
+              {/* Artwork */}
+              <section className="rounded-3xl bg-[#121316] p-5">
+                <div className="mb-5 flex items-center gap-3 border-b border-white/[0.06] pb-4">
+                  <Image className="h-4 w-4 text-neutral-400" />
 
-      {/* BOTTOM SECTION: 12 COLS GRID SPLIT (5 : 4 : 3) */}
-      {}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pb-4">
-        {/* CARD 1 (5 COLS): FILE UPLOAD DROPZONE & ASSET PREVIEW */}
-        <div className="md:col-span-5 bg-[#121316] rounded-[30px] p-5 flex flex-col justify-between shadow-lg ">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-extrabold text-red-400 uppercase tracking-widest bg-red-950/60 border border-red-500/30 px-3 py-1 rounded-full">
-              Media Streams & Assets
-            </span>
-            <span className="text-xs text-neutral-400 font-medium">
-              Step 2 of 2
-            </span>
-          </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">Images</h2>
+                  </div>
+                </div>
 
-          {/* Drag Drop Area */}
-          <div
-            onClick={startSimulatedUpload}
-            className="border-2 border-dashed border-white/10 hover:border-red-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-[#1a1c23]/50 group"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-neutral-800 group-hover:bg-red-600/20 text-red-500 flex items-center justify-center mb-3 transition-colors">
-              <Video className="w-6 h-6" />
-            </div>
-            <h4 className="text-xs font-bold text-white mb-1">
-              Click to Browse or Drag High-Bitrate Video (MP4 / MKV)
-            </h4>
-            <p className="text-[10px] text-neutral-500">
-              Supports ProRes, H.265 4K UHD up to 50 GB
-            </p>
-          </div>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-[1fr_180px]">
+                  <ImageUploader
+                    control={control}
+                    name="backdrop"
+                    label="Banner"
+                    // description="Wide artwork for hero sections and title pages."
+                    setError={setError}
+                    aspect="banner"
+                    errMsg={errors.backdrop?.message as string}
+                  />
 
-          {/* Encoding Bar */}
-          <div className="mt-4 pt-3 border-t border-white/5">
-            <div className="flex justify-between text-[11px] font-semibold text-neutral-300 mb-1">
-              <span className="flex items-center gap-1.5">
-                <HardDrive className="w-3.5 h-3.5 text-red-400" />
-                <span>Transcoder Engine Progress</span>
-              </span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-red-600 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          </div>
-        </div>
+                  <ImageUploader
+                    control={control}
+                    name="poster"
+                    label="Logo"
+                    // description="Transparent title logo."
+                    setError={setError}
+                    aspect="logo"
+                    errMsg={errors.poster?.message as string}
+                  />
+                </div>
+              </section>
 
-        {/* CARD 2 (4 COLS): TECH SPECS & CAST TAGGER */}
-        <div className="md:col-span-4 bg-[#18191c] rounded-[30px] p-5 flex flex-col justify-between shadow-lg ">
-          <div className="flex flex-col gap-3">
-            <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider border-b border-white/5 pb-2">
-              Technical Badges & Cast
-            </h4>
+              {/* Video */}
 
-            {/* Quality Toggles */}
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: "4K UHD", state: is4K, set: setIs4K },
-                { label: "HDR10+", state: isHDR, set: setIsHDR },
-                { label: "Dolby Atmos", state: isDolby, set: setIsDolby },
-              ].map((tech) => (
-                <button
-                  key={tech.label}
-                  type="button"
-                  onClick={() => tech.set(!tech.state)}
-                  className={`py-2 px-1 rounded-xl text-[10px] font-bold border transition-all ${
-                    tech.state
-                      ? "bg-red-950/60 border-red-500/40 text-red-400"
-                      : "bg-neutral-900 border-white/5 text-neutral-500"
-                  }`}
-                >
-                  {tech.label}
-                </button>
-              ))}
-            </div>
+              {/* Video */}
+              <section className="rounded-3xl bg-[#121316] p-5">
+                <div className="mb-5 flex items-center gap-3 border-b border-white/[0.06] pb-4">
+                  <HardDrive className="h-4 w-4 text-neutral-400" />
 
-            {/* Cast Input */}
-            <div className="flex flex-col gap-1.5 mt-1">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase">
-                Cast Member Tagging
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Add Actor Name"
-                  value={castInput}
-                  onChange={(e) => setCastInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addCastMember())
-                  }
-                  className="flex-1 bg-[#1a1c23] text-xs font-medium text-white px-3 py-2 rounded-xl  outline-none"
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">
+                      Source media
+                    </h2>
+
+                    <p className="mt-0.5 text-sm text-neutral-600">
+                      Upload the original source used for transcoding.
+                    </p>
+                  </div>
+                </div>
+
+                <MovieUploader
+                  control={control}
+                  name="video"
+                  setError={setError}
+                  errMsg={errors.video?.message as string}
+                  maxSizeGB={20}
                 />
+
+                {/* {isUploading && (
+  <div className="space-y-2">
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-neutral-400">
+        Uploading movie...
+      </span>
+
+      <span className="text-xs font-medium text-white tabular-nums">
+        {uploadProgress}%
+      </span>
+    </div>
+
+    <div
+      className="h-1.5 overflow-hidden rounded-full bg-white/10"
+      role="progressbar"
+      aria-label="Movie upload progress"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={uploadProgress}
+    >
+      <div
+        className="h-full rounded-full bg-red-500 transition-[width] duration-200"
+        style={{ width: `${uploadProgress}%` }}
+      />
+    </div>
+  </div>
+)} */}
+                {/* Upload progress */}
+                {isUploading && (
+                  <section className="rounded-2xl border border-white/[0.06] bg-[#121316] p-5">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04]">
+                          <Upload className="h-4 w-4 text-neutral-300" />
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            Uploading source media
+                          </p>
+                          <p className="mt-1 text-xs text-neutral-500">
+                            Keep this page open while the upload is in progress.
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-sm font-medium tabular-nums text-white">
+                        {uploadProgress}%
+                      </span>
+                    </div>
+
+                    <div
+                      className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]"
+                      role="progressbar"
+                      aria-label="Movie upload progress"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={uploadProgress}
+                    >
+                      <div
+                        className="h-full rounded-full bg-red-500 transition-[width] duration-200 ease-out"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+
+                    <div className="mt-2 flex justify-between text-xs text-neutral-500">
+                      <span>
+                        {uploadProgress >= 100
+                          ? "Upload sent"
+                          : "Transferring file"}
+                      </span>
+                      <span>Please don't close this page</span>
+                    </div>
+                  </section>
+                )}
+              </section>
+
+              {/* Cast */}
+              <section className="rounded-3xl bg-[#121316] p-5">
+                <div className="mb-5">
+                  <h2 className="text-sm font-semibold text-white">Cast</h2>
+
+                  <p className="mt-0.5 text-sm text-neutral-600">
+                    Add the principal cast associated with this title.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <TextInputField
+                    type={InputType.TEXT}
+                    name="castInput"
+                    control={control}
+                    placeholder="Actor or creator name"
+                    errMsg=""
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addCastMember}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
+                      border border-white/[0.07] bg-white/[0.04] text-neutral-300
+                      transition hover:bg-white/[0.08] hover:text-white"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {castList.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {castList.map((actor) => (
+                      <div
+                        key={actor}
+                        className="flex items-center gap-2 rounded-lg border border-white/[0.06]
+                          bg-[#0f1012] px-3 py-2 text-xs text-neutral-300"
+                      >
+                        <span>{actor}</span>
+
+                        <button
+                          type="button"
+                          onClick={() => removeCastMember(actor)}
+                          className="text-neutral-600 transition hover:text-neutral-300"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between rounded-3xl bg-[#121316] p-4">
                 <button
                   type="button"
-                  onClick={addCastMember}
-                  className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold"
+                  onClick={() => showToast("Saved as draft")}
+                  className="rounded-xl border border-white/[0.07] bg-white/[0.03]
+                    px-5 py-3 text-xs font-medium text-neutral-300 transition
+                    hover:bg-white/[0.07] hover:text-white"
                 >
-                  <Plus className="w-4 h-4" />
+                  Save draft
+                </button>
+
+                <button
+                  disabled={isUploading}
+                  type="submit"
+                  className="rounded-xl bg-white px-6 py-3 text-xs font-semibold
+                    text-black transition hover:bg-neutral-200 active:scale-[0.98]"
+                >
+                  {isUploading ? (
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                  ) : (
+                    "Publish title"
+                  )}
                 </button>
               </div>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1.5 mt-2 max-h-20 overflow-y-auto no-scrollbar">
-                {castList.map((actor) => (
-                  <span
-                    key={actor}
-                    className="text-[10px] font-semibold bg-neutral-800 text-neutral-200 px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10"
-                  >
-                    <span>{actor}</span>
-                    <X
-                      onClick={() => removeCastMember(actor)}
-                      className="w-3 h-3 cursor-pointer hover:text-red-400"
-                    />
-                  </span>
-                ))}
-              </div>
             </div>
-          </div>
-        </div>
 
-        {/* CARD 3 (3 COLS): ACTIVITY FEED */}
-        <div className="md:col-span-3 bg-red-950/80 rounded-[30px] p-5 flex flex-col justify-between shadow-lg border border-red-500/20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-red-300">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-              <span>Activity Feed</span>
-            </div>
-            <Clock className="w-4 h-4 text-red-300" />
-          </div>
+            {/* RIGHT */}
+            <aside className="space-y-4 xl:col-span-4">
+              {/* Queue */}
+              <section className="rounded-3xl bg-[#121316] p-5">
+                <div className="mb-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Layers className="h-4 w-4 text-neutral-400" />
 
-          <div className="flex flex-col gap-3 my-auto py-2">
-            {activity.map((act) => (
-              <div key={act.id} className="flex items-start gap-2 text-left">
-                {act.status === "success" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <h5 className="text-xs font-bold text-white leading-tight">
-                    {act.title}
-                  </h5>
-                  <p className="text-[10px] text-red-200/80">{act.action}</p>
-                  <span className="text-[9px] text-neutral-400">
-                    {act.time}
+                    <div>
+                      <h2 className="text-sm font-semibold text-white">
+                        Upload queue
+                      </h2>
+
+                      <p className="mt-0.5 text-sm text-neutral-600">
+                        Current uploads and saved drafts.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-xs tabular-nums text-neutral-600">
+                    {drafts.length}
                   </span>
                 </div>
-              </div>
-            ))}
-          </div>
 
-          <button
-            onClick={() => showToast("Activity logs exported")}
-            className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 transition-all"
-          >
-            View Full Audit Logs
-          </button>
-        </div>
+                <div className="space-y-2">
+                  {drafts.map((item) => (
+                    <div key={item.id} className="rounded-xl bg-[#0f1012] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-xs font-medium text-neutral-200">
+                            {item.title}
+                          </h3>
+
+                          <p className="mt-1 text-[12px] text-neutral-600">
+                            {item.type} · {item.size}
+                          </p>
+                        </div>
+
+                        <span className="shrink-0 text-[12px] text-neutral-600">
+                          {item.progress}%
+                        </span>
+                      </div>
+
+                      {item.progress > 0 && item.progress < 100 && (
+                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+                          <div
+                            className="h-full rounded-full bg-neutral-400"
+                            style={{
+                              width: `${item.progress}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-3">
+                        <span className="text-[12px] text-neutral-600">
+                          {item.status}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDrafts((current) =>
+                              current.filter((draft) => draft.id !== item.id),
+                            );
+                          }}
+                          className="flex items-center gap-1.5 text-[12px] text-neutral-600 transition hover:text-neutral-300"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => showToast("Publishing ready titles")}
+                  className="mt-4 w-full rounded-xl border border-white/[0.07]
+                    bg-white/[0.03] py-3 text-xs font-medium text-neutral-300
+                    transition hover:bg-white/[0.07] hover:text-white"
+                >
+                  Publish ready titles
+                </button>
+              </section>
+
+              {/* Storage */}
+              <section className="rounded-3xl bg-[#121316] p-6">
+                <div className="flex items-center gap-3 ">
+                  <HardDrive className="h-6 w-6 text-neutral-500" />
+
+                  <div>
+                    <h3 className="text-xs font-medium text-neutral-200">
+                      Storage
+                    </h3>
+
+                    <p className="mt-0.5 text-[12px] text-neutral-600">
+                      Source media and generated streams
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pb-4">
+                  <div className="mb-2 flex items-center justify-between text-[12px]">
+                    <span className="text-neutral-600">Used storage</span>
+
+                    <span className="text-neutral-400">142 GB / 500 GB</span>
+                  </div>
+
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
+                    <div
+                      className="h-full rounded-full bg-neutral-500"
+                      style={{ width: "28.4%" }}
+                    />
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </form>
+        )}
+
+        {activeTab === "manage" && (
+          <section className="rounded-3xl bg-[#121316] p-8">
+            <div className="flex min-h-[300px] items-center justify-center">
+              <div className="text-center">
+                <Layers className="mx-auto h-6 w-6 text-neutral-600" />
+
+                <h2 className="mt-4 text-sm font-medium text-neutral-300">
+                  Library management
+                </h2>
+
+                <p className="mt-1 text-xs text-neutral-600">
+                  Your catalog management interface can live here.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

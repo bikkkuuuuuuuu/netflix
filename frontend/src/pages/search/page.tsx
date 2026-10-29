@@ -57,7 +57,7 @@ const SearchPage = () => {
                 type="text"
                 id="searchInput"
                 placeholder="Search movies, TV shows, actors, directors..."
-                className="w-full bg-transparent text-white placeholder-slate-400 text-base sm:text-lg focus:outline-none font-medium"
+                className="w-full bg-transparent text-white border border-slate-800/60 placeholder-slate-400 text-base sm:text-lg focus:outline-none font-medium"
                 // autocomplete="off"
               />
 

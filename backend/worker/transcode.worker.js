@@ -2,7 +2,15 @@ require("dotenv").config();
 const { Worker } = require("bullmq");
 const { redis } = require("../src/config/redis.config.js");
 const dbConnect = require("../src/config/db.config.js");
-const { transcodeMovie } = require("../src/services/transcode.service.js");
+const { transcodeProfile } = require("../src/services/transcode.service.js");
+
+const PROFILE = process.env.TRANSCODE_PROFILE;
+const validProfiles = ["1080p", "720p", "480p", "360p"];
+if (!validProfiles.includes(PROFILE)) {
+  console.error(`[Worker] Invalid TRANSCODE_PROFILE: ${PROFILE}`);
+  process.exit(1);
+}
+
 const startWorker = async () => {
   try {
     console.log("[Worker] Starting...");
@@ -11,14 +19,23 @@ const startWorker = async () => {
     const worker = new Worker(
       "movie-transcoding",
       async (job) => {
-        console.log(`[Worker] Processing movie: ${job.data.movieId}`);
+        const { movieId, profile } = job.data;
+        if (profile !== PROFILE) {
+          throw new Error(`Worker ${PROFILE} received job for ${profile}`);
+        }
+
+        console.log(`[Worker] Processing movie: ${movieId}`);
         console.log(`[Worker] Job ID: ${job.id}`);
-        await transcodeMovie(job.data.movieId);
-        console.log(`[Worker] Finished movie: ${job.data.movieId}`);
+        await transcodeProfile(movieId, profile);
+        console.log(`[Worker] Finished movie: ${movieId}`);
       },
       {
         connection: redis,
         concurrency: 1,
+        limiter: {
+          max: 1,
+          duration: 1000,
+        },
       },
     );
 
@@ -27,7 +44,7 @@ const startWorker = async () => {
     });
 
     worker.on("active", (job) => {
-      console.log(`[Worker] Job ${job.id} is now active`);
+      console.log(`[Worker] ${PROFILE} Job ${job.id} active`);
     });
 
     worker.on("completed", (job) => {
@@ -35,14 +52,24 @@ const startWorker = async () => {
     });
 
     worker.on("failed", (job, error) => {
-      console.error(`[Worker] Job ${job?.id} failed:`, error.message);
+      console.error(
+        `[Worker] ${PROFILE} Job ${job?.id} failed:`,
+        error.message,
+      );
     });
 
     worker.on("error", (error) => {
-      console.error("[Worker] Worker error:", error);
+      console.error(`[Worker] ${PROFILE} Worker error:`, error);
     });
+    const shutdown = async () => {
+      console.log(`[Worker:${PROFILE}] Shutting down...`);
+      await worker.close();
+      process.exit(0);
+    };
+    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", shutdown);
   } catch (error) {
-    console.error("[Worker] Failed to start:", error);
+    console.error(`[Worker]: ${PROFILE} Failed to start:`, error);
     process.exit(1);
   }
 };

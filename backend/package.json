@@ -5,13 +5,21 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "worker:1080p": "node worker/transcode-1080p.worker.js",
+    "worker:720p": "node worker/transcode-720p.worker.js",
+    "worker:480p": "node worker/transcode-480p.worker.js",
+    "worker:360p": "node worker/transcode-360p.worker.js",
+    "worker:subtitles": "node worker/subtitle.worker.js",
+    "worker:finalizer": "node worker/master-playlist.worker.js",
+    "workers": "concurrently \"npm:worker:1080p\" \"npm:worker:720p\" \"npm:worker:480p\" \"npm:worker:360p\" \"npm:worker:subtitles\" \"npm:worker:finalizer\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "concurrently": "^10.0.5",
     "nodemon": "^3.1.14"
   },
   "dependencies": {

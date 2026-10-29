@@ -23,7 +23,7 @@ const AuthModalProvider = () => {
 
   const handleLogin = () => {
     setOpen(false);
-    navigate("/login");
+    navigate("/auth/login");
   };
 
   if (!open) return null;

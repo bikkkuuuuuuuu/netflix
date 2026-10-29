@@ -10,8 +10,7 @@ export default function Banner() {
         <div className="relative h-full overflow-hidden -ml-12 border-r border-red-500/20">
           <div className="absolute inset-0  transition-transform duration-700 ">
             <img
-              // src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSnM9Tp6VElV1R7aDr2Nat71IQMln4KJhfiirnMp0Fbfpip9dy1Y8j49eT&s=10"
-              src="https://deadline.com/wp-content/uploads/2025/12/stranger-things-season-5-netflix-posters.jpg"
+              src="/images/stranger.png"
               alt="Steve Harrington"
               className="w-full h-full object-cover filter contrast-125 saturate-150 brightness-75"
             />

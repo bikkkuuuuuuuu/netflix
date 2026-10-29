@@ -98,7 +98,7 @@ class MovieService {
         description: data.description,
         tagline: data.tagline || null,
         releaseYear: Number(data.releaseYear),
-        runtime: Number(data.runtime),
+        runtime: Number(data?.runtime || 0),
         maturityRating: data.maturityRating || "NR",
         genres: this.parseArray(data.genres),
         cast: this.parseCast(data.cast),

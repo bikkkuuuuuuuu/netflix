@@ -16,7 +16,7 @@ class MovieController {
       res.json({
         detail: movie,
         message: "Movie created successfully",
-        status: "BANNER_CREATE_SUCCESS",
+        status: "MOVIE_CREATE_SUCCESS",
         options: null,
       });
     } catch (exception) {
@@ -111,7 +111,7 @@ class MovieController {
       res.json({
         detail: response,
         message: "Movie delete successfully",
-        status: "BANNER_DELETE_SUCCESS",
+        status: "MOVIE_DELETE_SUCCESS",
         options: null,
       });
     } catch (exception) {

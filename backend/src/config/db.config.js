@@ -5,7 +5,10 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 const mongoose = require("mongoose");
 const populateAdmin = require("../seeder/admin.seeder");
 
-const dbConnect = async () => {
+const dbConnect = async () => 
+  
+  
+  {
   try {
     console.log("db server is connecting");
     await mongoose.connect(process.env.MONGODB_URL, {

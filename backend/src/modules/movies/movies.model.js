@@ -28,7 +28,7 @@ const MovieSchema = new mongoose.Schema({
   },
   runtime: {
     type: Number,
-    required: true,
+    // required: true,
   },
   maturityRating: {
     type: String,

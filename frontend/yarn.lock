@@ -199,10 +199,10 @@
     "@babel/helper-skip-transparent-expression-wrappers" "^7.25.9"
     "@babel/plugin-syntax-typescript" "^7.25.9"
 
-"@babel/runtime@^7.12.5", "@babel/runtime@^7.17.8", "@babel/runtime@^7.18.3", "@babel/runtime@^7.26.0", "@babel/runtime@^7.28.2", "@babel/runtime@^7.5.5", "@babel/runtime@^7.8.7", "@babel/runtime@^7.9.2":
-  version "7.28.2"
-  resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.28.2.tgz"
-  integrity sha512-KHp2IflsnGywDjBWDkR9iEqiWSpc8GIi0lgTT3mOElT0PP1tG26P4tmFI2YvAdzgq9RGyoHZQEIEdZy6Ec5xCA==
+"@babel/runtime@^7.11.2", "@babel/runtime@^7.12.5", "@babel/runtime@^7.17.8", "@babel/runtime@^7.18.3", "@babel/runtime@^7.26.0", "@babel/runtime@^7.28.2", "@babel/runtime@^7.28.4", "@babel/runtime@^7.5.5", "@babel/runtime@^7.8.7", "@babel/runtime@^7.9.2":
+  version "7.29.10"
+  resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.10.tgz"
+  integrity sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==
 
 "@babel/template@^7.26.9":
   version "7.26.9"
@@ -2150,6 +2150,11 @@
   resolved "https://registry.npmjs.org/@types/use-sync-external-store/-/use-sync-external-store-0.0.6.tgz"
   integrity sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==
 
+"@types/video.js@^7.3.58":
+  version "7.3.58"
+  resolved "https://registry.npmjs.org/@types/video.js/-/video.js-7.3.58.tgz"
+  integrity sha512-1CQjuSrgbv1/dhmcfQ83eVyYbvGyqhTvb2Opxr0QCV+iJ4J6/J+XWQ3Om59WiwCd1MN3rDUHasx5XRrpUtewYQ==
+
 "@types/webxr@*", "@types/webxr@^0.5.2":
   version "0.5.21"
   resolved "https://registry.npmjs.org/@types/webxr/-/webxr-0.5.21.tgz"
@@ -2255,6 +2260,106 @@
   dependencies:
     "@use-gesture/core" "10.3.1"
 
+"@videojs/core@10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/core/-/core-10.0.0-rc.4.tgz"
+  integrity sha512-wRiGG9c4rgap8X1yb2iWC/lF0GuhGGPkyEv0/bGcbiYFo0vHdXHiqtV/fjn+a+WoMLdgPhJHi77CTVxoP6xkOA==
+  dependencies:
+    "@videojs/media" "10.0.0-rc.4"
+    "@videojs/store" "10.0.0-rc.4"
+    "@videojs/utils" "10.0.0-rc.4"
+
+"@videojs/hlsjs-video@^10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/hlsjs-video/-/hlsjs-video-10.0.0-rc.4.tgz"
+  integrity sha512-L0IaPWNuAG5/7FMG2z3ECYg76wYw/zFyvY0lMwAGY69d/Al4q7VKWTGnKZbuxiGDqEG7OmbdNQIqIVaIJA5wmA==
+  dependencies:
+    "@videojs/media" "10.0.0-rc.4"
+    "@videojs/native-hls-video" "10.0.0-rc.4"
+    "@videojs/utils" "10.0.0-rc.4"
+    hls.js "1.6.7"
+
+"@videojs/http-streaming@^3.17.5":
+  version "3.17.5"
+  resolved "https://registry.npmjs.org/@videojs/http-streaming/-/http-streaming-3.17.5.tgz"
+  integrity sha512-PRRQVu0hYW5h0XvRWpIyIpEatpMZzZtf7L1avV89Hnu+69f+0c7oLsSL9jwpg2nbvzGkdX5rQxQkz5Vc7tFR9w==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@videojs/vhs-utils" "^4.1.2"
+    aes-decrypter "^4.0.2"
+    global "^4.4.0"
+    m3u8-parser "^7.2.0"
+    mpd-parser "^1.4.0"
+    mux.js "7.1.0"
+    video.js "^7 || ^8"
+
+"@videojs/media@10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/media/-/media-10.0.0-rc.4.tgz"
+  integrity sha512-QrBpeF+uLr+RXgbezQSlAfswFKviKiSx4XFfsYeikikJ/y7FvgPLuJzNSJtIZIwvzWMfQEqZ2QBwNOZXeo7pFw==
+  dependencies:
+    "@videojs/utils" "10.0.0-rc.4"
+
+"@videojs/native-hls-video@10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/native-hls-video/-/native-hls-video-10.0.0-rc.4.tgz"
+  integrity sha512-/tDI6p5yybuJ+Uksd89xNnZfpwpZ/ZXbhqDm299qPzC5vd4Em212zbabdIyj3Zf5Ca8UDOOB9RmYpcYOPODabg==
+  dependencies:
+    "@videojs/media" "10.0.0-rc.4"
+    "@videojs/utils" "10.0.0-rc.4"
+
+"@videojs/react@^10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/react/-/react-10.0.0-rc.4.tgz"
+  integrity sha512-4sbU878boll6yMUpD9NHCgdKcHashIRXG5KQ/DdG4cA6Opc17xWFw/rM+H+G6VAJbArgux8nI5/9L8jFxGFkAw==
+  dependencies:
+    "@videojs/core" "10.0.0-rc.4"
+    "@videojs/media" "10.0.0-rc.4"
+    "@videojs/native-hls-video" "10.0.0-rc.4"
+    "@videojs/spf" "10.0.0-rc.4"
+    "@videojs/store" "10.0.0-rc.4"
+    "@videojs/utils" "10.0.0-rc.4"
+    react-compiler-runtime "^1.0.0"
+
+"@videojs/spf@10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/spf/-/spf-10.0.0-rc.4.tgz"
+  integrity sha512-7DDO2bH9bMFB6s9y7GpxRb4rZkzrJ+wVvcyUCdG6npg2Gu1vrwCDdKwic55oQwnp0Jr4HTFx9kC/rpT+CPCtXQ==
+  dependencies:
+    "@videojs/media" "10.0.0-rc.4"
+    "@videojs/utils" "10.0.0-rc.4"
+    signal-polyfill "^0.2.2"
+
+"@videojs/store@10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/store/-/store-10.0.0-rc.4.tgz"
+  integrity sha512-Gv6RDSuwPDpbd/Qi5LZOWaW6ENiyn3Wyr382l0W1LLoCJi9PAxl1ZCAsfUdckrZuO7SLIgy9MNbueDpSo2jzHw==
+  dependencies:
+    "@videojs/utils" "10.0.0-rc.4"
+    react-compiler-runtime "^1.0.0"
+
+"@videojs/utils@10.0.0-rc.4":
+  version "10.0.0-rc.4"
+  resolved "https://registry.npmjs.org/@videojs/utils/-/utils-10.0.0-rc.4.tgz"
+  integrity sha512-61njRdinjIOveTz2Azzx1HcpyPlkHreGr0Jne9TPOyY6+x2XTljJ89To/flQBbcUSeaQ+9Nce9XJIGSVqZWN2g==
+
+"@videojs/vhs-utils@^4.1.1", "@videojs/vhs-utils@^4.1.2":
+  version "4.1.2"
+  resolved "https://registry.npmjs.org/@videojs/vhs-utils/-/vhs-utils-4.1.2.tgz"
+  integrity sha512-1Dsv5dtWOq0LP1G37O46FQFA2tKAZON5UMe6dFPxT7JvPhEx8QIXcFQxan8+hHI3fX6aomFRFrUBJNgRYQDSXA==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    global "^4.4.0"
+
+"@videojs/xhr@2.7.0":
+  version "2.7.0"
+  resolved "https://registry.npmjs.org/@videojs/xhr/-/xhr-2.7.0.tgz"
+  integrity sha512-giab+EVRanChIupZK7gXjHy90y3nncA2phIOyG3Ne5fvpiMJzvqYwiTOnEVW2S4CoYcuKJkomat7bMXA/UoUZQ==
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    global "~4.4.0"
+    is-function "^1.0.1"
+
 "@vitejs/plugin-react-swc@^3.5.0":
   version "3.7.2"
   resolved "https://registry.npmjs.org/@vitejs/plugin-react-swc/-/plugin-react-swc-3.7.2.tgz"
@@ -2266,6 +2371,11 @@
   version "0.1.58"
   resolved "https://registry.npmjs.org/@webgpu/types/-/types-0.1.58.tgz"
   integrity sha512-+8+NBE17zrc1wS4FvZmmuGTpog5C2H6QC46RY2TTWNpnt15Xvp7dZoUHZQXvb8l5ddKwO8l1pDJa6XTnR4Al1Q==
+
+"@xmldom/xmldom@^0.8.3":
+  version "0.8.15"
+  resolved "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.8.15.tgz"
+  integrity sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==
 
 abbrev@^2.0.0:
   version "2.0.0"
@@ -2284,6 +2394,16 @@ acorn@^8.14.0:
   version "8.14.0"
   resolved "https://registry.npmjs.org/acorn/-/acorn-8.14.0.tgz"
   integrity sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA==
+
+aes-decrypter@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.npmjs.org/aes-decrypter/-/aes-decrypter-4.0.2.tgz"
+  integrity sha512-lc+/9s6iJvuaRe5qDlMTpCFjnwpkeOXp8qP3oiZ5jsj1MRg+SBVUmmICrhxHvc8OELSmc+fEyyxAuppY6hrWzw==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@videojs/vhs-utils" "^4.1.1"
+    global "^4.4.0"
+    pkcs7 "^1.0.4"
 
 agent-base@^7.0.2:
   version "7.1.3"
@@ -3094,6 +3214,11 @@ dom-helpers@^5.0.1:
     "@babel/runtime" "^7.8.7"
     csstype "^3.0.2"
 
+dom-walk@^0.1.0:
+  version "0.1.2"
+  resolved "https://registry.npmjs.org/dom-walk/-/dom-walk-0.1.2.tgz"
+  integrity sha512-6QvTW9mrGeIegrFXdtQi9pk7O/nSK6lSdXW2eqUspN5LWD7UTji2Fqw5V2YLjBpHEoU9Xl/eUWNpDeZvoyOv2w==
+
 domready@~0.2.12:
   version "0.2.13"
   resolved "https://registry.npmjs.org/domready/-/domready-0.2.13.tgz"
@@ -3737,6 +3862,14 @@ glob@^10.2.2, glob@^10.3.10, glob@^10.3.7, glob@^10.4.5:
     package-json-from-dist "^1.0.0"
     path-scurry "^1.11.1"
 
+global@^4.3.1, global@^4.4.0, global@~4.4.0, global@4.4.0:
+  version "4.4.0"
+  resolved "https://registry.npmjs.org/global/-/global-4.4.0.tgz"
+  integrity sha512-wv/LAoHdRE3BeTGz53FAamhGlPLhlssK45usmGFThIi4XqnBmjKQ16u+RNbP7WvigRZDxUsM0J3gcQ5yicaL0w==
+  dependencies:
+    min-document "^2.19.0"
+    process "^0.11.10"
+
 globals@^11.1.0:
   version "11.12.0"
   resolved "https://registry.npmjs.org/globals/-/globals-11.12.0.tgz"
@@ -3840,10 +3973,10 @@ headers-polyfill@^4.0.2:
   resolved "https://registry.npmjs.org/headers-polyfill/-/headers-polyfill-4.0.3.tgz"
   integrity sha512-IScLbePpkvO846sIwOtOTDjutRMWdXdJmXdMvk6gCBHxFO8d+QKOQedyZSxFTTFYRSmlgSTDtXqqq4pcenBXLQ==
 
-hls.js@^1.5.17:
-  version "1.5.20"
-  resolved "https://registry.npmjs.org/hls.js/-/hls.js-1.5.20.tgz"
-  integrity sha512-uu0VXUK52JhihhnN/MVVo1lvqNNuhoxkonqgO3IpjvQiGpJBdIXMGkofjQb/j9zvV7a1SW8U9g1FslWx/1HOiQ==
+hls.js@^1.5.17, hls.js@1.6.7:
+  version "1.6.7"
+  resolved "https://registry.npmjs.org/hls.js/-/hls.js-1.6.7.tgz"
+  integrity sha512-QW2fnwDGKGc9DwQUGLbmMOz8G48UZK7PVNJPcOUql1b8jubKx4/eMHNP5mGqr6tYlJNDG1g10Lx2U/qPzL6zwQ==
 
 hoist-non-react-statics@^3.3.0, hoist-non-react-statics@^3.3.1:
   version "3.3.2"
@@ -4060,6 +4193,11 @@ is-fullwidth-code-point@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz"
   integrity sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==
+
+is-function@^1.0.1:
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/is-function/-/is-function-1.0.2.tgz"
+  integrity sha512-lw7DUp0aWXYg+CBCN+JKkcE0Q2RayZnSvnZBlwgxHBQhqt5pZNVy4Ri7H9GmmXkdu7LUthszM+Tor1u/2iBcpQ==
 
 is-glob@^4.0.0, is-glob@^4.0.1, is-glob@^4.0.3, is-glob@~4.0.1:
   version "4.0.3"
@@ -4469,6 +4607,15 @@ luxon@^3.5.0:
   resolved "https://registry.npmjs.org/luxon/-/luxon-3.5.0.tgz"
   integrity sha512-rh+Zjr6DNfUYR3bPwJEnuwDdqMbxZW7LOQfUN4B54+Cl+0o5zaU9RJ6bcidfDtC1cWCZXQ+nvX8bf6bAji37QQ==
 
+m3u8-parser@^7.2.0:
+  version "7.2.0"
+  resolved "https://registry.npmjs.org/m3u8-parser/-/m3u8-parser-7.2.0.tgz"
+  integrity sha512-CRatFqpjVtMiMaKXxNvuI3I++vUumIXVVT/JpCpdU/FynV/ceVw1qpPyyBNindL+JlPMSesx+WX1QJaZEJSaMQ==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@videojs/vhs-utils" "^4.1.1"
+    global "^4.4.0"
+
 maath@^0.10.8:
   version "0.10.8"
   resolved "https://registry.npmjs.org/maath/-/maath-0.10.8.tgz"
@@ -4555,6 +4702,13 @@ mimic-response@^3.1.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/mimic-response/-/mimic-response-3.1.0.tgz"
   integrity sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==
+
+min-document@^2.19.0:
+  version "2.19.2"
+  resolved "https://registry.npmjs.org/min-document/-/min-document-2.19.2.tgz"
+  integrity sha512-8S5I8db/uZN8r9HSLFVWPdJCvYOejMcEC82VIzNUc6Zkklf/d1gg2psfE79/vyhWOj4+J8MtwmoOz3TmvaGu5A==
+  dependencies:
+    dom-walk "^0.1.0"
 
 mini-svg-data-uri@^1.4.3:
   version "1.4.4"
@@ -4682,6 +4836,16 @@ motion-utils@^12.4.10:
   resolved "https://registry.npmjs.org/motion-utils/-/motion-utils-12.4.10.tgz"
   integrity sha512-NPwZd94V013SwRf++jMrk2+HEBgPkeIE2RiOzhAuuQlqxMJPkKt/LXVh6Upl+iN8oarSGD2dlY5/bqgsYXDABA==
 
+mpd-parser@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/mpd-parser/-/mpd-parser-1.4.0.tgz"
+  integrity sha512-blbA7XpAaOdC/PR0Tu8GiUxlx6CpBuRowQPYV7lhi9Yr9G9+dkPXIUjqjzc/NCn/uZZPopluaJlIYntIEI/VLw==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@videojs/vhs-utils" "^4.1.2"
+    "@xmldom/xmldom" "^0.8.3"
+    global "^4.4.0"
+
 ms@^2.1.2, ms@^2.1.3:
   version "2.1.3"
   resolved "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz"
@@ -4715,6 +4879,14 @@ mute-stream@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/mute-stream/-/mute-stream-2.0.0.tgz"
   integrity sha512-WWdIxpyjEn+FhQJQQv9aQAYlHoNVdzIzUySNV1gHUPDSdZJ3yZn7pAAbQcV7B56Mvu881q9FZV+0Vx2xC44VWA==
+
+mux.js@^7.0.1, mux.js@7.1.0:
+  version "7.1.0"
+  resolved "https://registry.npmjs.org/mux.js/-/mux.js-7.1.0.tgz"
+  integrity sha512-NTxawK/BBELJrYsZThEulyUMDVlLizKdxyAsMuzoCD1eFj97BVaA8D/CvKsKu6FOLYkFojN5CbM9h++ZTZtknA==
+  dependencies:
+    "@babel/runtime" "^7.11.2"
+    global "^4.4.0"
 
 mz@^2.7.0:
   version "2.7.0"
@@ -5226,6 +5398,13 @@ pirates@^4.0.1:
   resolved "https://registry.npmjs.org/pirates/-/pirates-4.0.6.tgz"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
 
+pkcs7@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.npmjs.org/pkcs7/-/pkcs7-1.0.4.tgz"
+  integrity sha512-afRERtHn54AlwaF2/+LFszyAANTCggGilmcmILUzEjvs3XgFZT+xE6+QWQcAGmu4xajy+Xtj7acLOPdx5/eXWQ==
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+
 postcss-import@^15.1.0:
   version "15.1.0"
   resolved "https://registry.npmjs.org/postcss-import/-/postcss-import-15.1.0.tgz"
@@ -5293,6 +5472,11 @@ proc-log@^5.0.0:
   version "5.0.0"
   resolved "https://registry.npmjs.org/proc-log/-/proc-log-5.0.0.tgz"
   integrity sha512-Azwzvl90HaF0aCz1JrDdXQykFakSSNPaPoiZ9fm5qJIMHioDZEi7OAdRwSm6rSoPtY3Qutnm3L7ogmg3dc+wbQ==
+
+process@^0.11.10:
+  version "0.11.10"
+  resolved "https://registry.npmjs.org/process/-/process-0.11.10.tgz"
+  integrity sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==
 
 proggy@^3.0.0:
   version "3.0.0"
@@ -5424,6 +5608,11 @@ quill@^1.3.7:
     extend "^3.0.2"
     parchment "^1.1.4"
     quill-delta "^3.6.2"
+
+react-compiler-runtime@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/react-compiler-runtime/-/react-compiler-runtime-1.0.0.tgz"
+  integrity sha512-rRfjYv66HlG8896yPUDONgKzG5BxZD1nV9U6rkm+7VCuvQc903C4MjcoZR4zPw53IKSOX9wMQVpA1IAbRtzQ7w==
 
 react-dom@^19.0.0-rc.1:
   version "19.0.0"
@@ -5983,6 +6172,11 @@ signal-exit@^4.1.0:
   version "4.1.0"
   resolved "https://registry.npmjs.org/signal-exit/-/signal-exit-4.1.0.tgz"
   integrity sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==
+
+signal-polyfill@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.npmjs.org/signal-polyfill/-/signal-polyfill-0.2.2.tgz"
+  integrity sha512-p63Y4Er5/eMQ9RHg0M0Y64NlsQKpiu6MDdhBXpyywRuWiPywhJTpKJ1iB5K2hJEbFZ0BnDS7ZkJ+0AfTuL37Rg==
 
 sigstore@^3.0.0:
   version "3.0.0"
@@ -6673,6 +6867,43 @@ victory-vendor@^36.6.8:
     d3-shape "^3.1.0"
     d3-time "^3.0.0"
     d3-timer "^3.0.1"
+
+"video.js@^7 || ^8", video.js@^8.24.2:
+  version "8.24.2"
+  resolved "https://registry.npmjs.org/video.js/-/video.js-8.24.2.tgz"
+  integrity sha512-Ya8gFnxWxr/m8YYdOOjOqsAVLtbZ4/RI6Vpqn4KoAFdKBjl8vy5KXF/n7Z4GqPtArBG05/Z71WX6/gZS3HWLbg==
+  dependencies:
+    "@babel/runtime" "^7.28.4"
+    "@videojs/http-streaming" "^3.17.5"
+    "@videojs/vhs-utils" "^4.1.2"
+    "@videojs/xhr" "2.7.0"
+    aes-decrypter "^4.0.2"
+    global "4.4.0"
+    m3u8-parser "^7.2.0"
+    mpd-parser "^1.4.0"
+    mux.js "^7.0.1"
+    videojs-contrib-quality-levels "4.1.0"
+    videojs-font "4.2.0"
+    videojs-vtt.js "0.15.5"
+
+videojs-contrib-quality-levels@4.1.0:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/videojs-contrib-quality-levels/-/videojs-contrib-quality-levels-4.1.0.tgz"
+  integrity sha512-TfrXJJg1Bv4t6TOCMEVMwF/CoS8iENYsWNKip8zfhB5kTcegiFYezEA0eHAJPU64ZC8NQbxQgOwAsYU8VXbOWA==
+  dependencies:
+    global "^4.4.0"
+
+videojs-font@4.2.0:
+  version "4.2.0"
+  resolved "https://registry.npmjs.org/videojs-font/-/videojs-font-4.2.0.tgz"
+  integrity sha512-YPq+wiKoGy2/M7ccjmlvwi58z2xsykkkfNMyIg4xb7EZQQNwB71hcSsB3o75CqQV7/y5lXkXhI/rsGAS7jfEmQ==
+
+videojs-vtt.js@0.15.5:
+  version "0.15.5"
+  resolved "https://registry.npmjs.org/videojs-vtt.js/-/videojs-vtt.js-0.15.5.tgz"
+  integrity sha512-yZbBxvA7QMYn15Lr/ZfhhLPrNpI/RmCSCqgIff57GC2gIrV5YfyzLfLyZMj0NnZSAz8syB4N0nHXpZg9MyrMOQ==
+  dependencies:
+    global "^4.3.1"
 
 vite@^6.0.5:
   version "6.0.6"

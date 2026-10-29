@@ -86,12 +86,18 @@
     @apply bg-background text-foreground;
   }
 }
+* {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
 body {
   font-family: "Manrope", sans-serif;
   background-color: #0d0c0c;
   scrollbar-width: none;
+
   -ms-overflow-style: none;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 @layer base {

@@ -23,30 +23,39 @@ class LocalStorage {
   getHlsDirectory(movieId) {
     return path.join(this.getMovieDirectory(movieId), "hls");
   }
+  getProfileDirectory(movieId, profileName) {
+    return path.join(this.getHlsDirectory(movieId), profileName);
+  }
 
+  getSubtitleDirectory(movieId) {
+    return path.join(this.getHlsDirectory(movieId), "subtitles");
+  }
+
+  getMasterPlaylistPath(movieId) {
+    return path.join(this.getHlsDirectory(movieId), "master.m3u8");
+  }
   async createMovieDirectories(movieId) {
     const sourceDirectory = this.getSourceDirectory(movieId);
-
     const hlsDirectory = this.getHlsDirectory(movieId);
+    const subtitleDirectory = this.getSubtitleDirectory(movieId);
 
     await this.ensureDirectory(sourceDirectory);
     await this.ensureDirectory(hlsDirectory);
+    await this.ensureDirectory(subtitleDirectory);
 
     return {
       sourceDirectory,
       hlsDirectory,
+      subtitleDirectory,
     };
   }
 
   async moveSourceVideo(movieId, file) {
     const sourceDirectory = this.getSourceDirectory(movieId);
-
     await this.ensureDirectory(sourceDirectory);
 
     const extension = path.extname(file.originalname) || ".mp4";
-
     const filename = `source${extension}`;
-
     const destination = path.join(sourceDirectory, filename);
 
     await fs.rename(file.path, destination);
@@ -59,11 +68,9 @@ class LocalStorage {
 
   async saveUpload(file) {
     const directory = path.join(root, "uploads");
-
     await this.ensureDirectory(directory);
 
     const destination = this.getUploadPath(file.filename);
-
     await fs.rename(file.path, destination);
 
     return {

@@ -30,5 +30,27 @@ movieRouter.post(
   ]),
   movieCtrl.create,
 );
+movieRouter.get("/list", checkLogin, allowRole("admin"), movieCtrl.index);
+
+movieRouter
+  .route("/:id")
+  .get(checkLogin, allowRole("admin"), movieCtrl.detail)
+  .patch(checkLogin, allowRole("admin"), upload.fields([ {
+      name: "poster",
+      maxCount: 1,
+    },
+    {
+      name: "backdrop",
+      maxCount: 1,
+    },
+    {
+      name: "logo",
+      maxCount: 1,
+    },
+    {
+      name: "video",
+      maxCount: 1,
+    },]), movieCtrl.update)
+  .delete(checkLogin, allowRole("admin"), movieCtrl.delete);
 
 module.exports = movieRouter;

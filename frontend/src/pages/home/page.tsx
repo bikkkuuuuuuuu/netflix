@@ -68,7 +68,7 @@ const HomePage = () => {
         <div className="md:col-span-5 relative rounded-[24px] overflow-hidden bg-neutral-900 min-h-[320px] p-5 flex flex-col justify-between shadow-lg group ">
           {/* Dune Background Thumbnail */}
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFlTsZTuoq7k3Wkv6WGTjyVHtmYuT3LFDR8A7G7xF-NIc7M16RAOERzUM&s=10"
+            src="/images/dune.png"
             alt="Dune Continue Watching"
             className="absolute inset-0 w-full h-full object-cover filter contrast-125 brightness-75 group-hover:scale-105 transition-transform duration-700"
           />
@@ -112,7 +112,7 @@ const HomePage = () => {
           {/* Deadpool Character Viewport */}
           <div className="absolute h-full w-full flex items-center justify-center">
             <img
-              src="https://i.ebayimg.com/00/s/MTYwMFgxMDY2/z/Eb8AAOSw-W5lWWFp/$_57.JPG?set_id=880000500F"
+              src="/images/spiderman.png"
               alt="Deadpool"
               className="h-full object-cover filter w-full  transition-transform duration-500"
             />
@@ -132,9 +132,9 @@ const HomePage = () => {
           <div className="md:col-span-3 relative rounded-[24px] overflow-hidden bg-red-950 min-h-[320px] p-5 flex flex-col justify-between shadow-lg  group">
             {/* Asian Cinema Artwork (Red Theme Overlay) */}
             <img
-              src="https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_.jpg"
+              src="/images/inter.png"
               alt="Now Playing Poster"
-              className="absolute inset-0 w-full h-full object-cover filter contrast-125 brightness-75 group-hover:scale-105 transition-transform duration-700"
+              className="absolute inset-0 w-full h-full object-cover filter contrast-125 brightness-75 scale-105 transition-transform duration-700"
             />
 
             {/* Header Info & Autoplay Toggle */}
@@ -211,9 +211,9 @@ interface BrowseProps {
 
 const Browse = ({ categories, onSelectCategory }: BrowseProps) => {
   return (
-    <div className="lg:col-span-3 bg-[#e9ecee] rounded-[30px] p-3 flex flex-col justify-between shadow-md border border-white/80">
+    <div className="lg:col-span-3 bg-[#121316] rounded-[30px] p-3 flex flex-col justify-between shadow-md border border-white/80">
       <div>
-        <h2 className="text-xl font-bold text-neutral-800 m-3 tracking-tight">
+        <h2 className="text-xl font-bold text-white m-3 tracking-tight">
           Browse
         </h2>
 
@@ -224,8 +224,8 @@ const Browse = ({ categories, onSelectCategory }: BrowseProps) => {
               onClick={() => onSelectCategory(cat.id)}
               className={`flex items-center justify-between p-3 rounded-full cursor-pointer transition-all duration-300 ${
                 cat.active
-                  ? "bg-white shadow-lg shadow-black/5 scale-[1.02]"
-                  : "hover:bg-white/60"
+                  ? "bg-[#262626] shadow-lg shadow-black/5 scale-[1.02]"
+                  : "hover:bg-[#262626]/60"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -236,7 +236,7 @@ const Browse = ({ categories, onSelectCategory }: BrowseProps) => {
                 />
 
                 <div>
-                  <h3 className="text-sm font-bold text-neutral-800 leading-tight">
+                  <h3 className="text-sm font-bold text-white leading-tight">
                     {cat.name}
                   </h3>
 
@@ -258,7 +258,7 @@ const Browse = ({ categories, onSelectCategory }: BrowseProps) => {
         </div>
       </div>
 
-      <button className="w-full mt-2 py-4 rounded-full bg-[#121316] text-white text-xs font-bold tracking-wider uppercase hover:bg-neutral-800 transition-colors shadow-md active:scale-95">
+      <button className="w-full mt-2 py-4 rounded-full bg-[#262626] text-white text-xs font-bold tracking-wider uppercase hover:bg-neutral-800 transition-colors shadow-md active:scale-95">
         Explore More
       </button>
     </div>

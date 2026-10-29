@@ -20,7 +20,7 @@ import {
   Award,
   ChevronDown,
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import MovieSlider, { Movie } from "@/components/Cards/cards";
 import { MOVIES, SuggestedMovies } from "@/data/movies";
 interface Episode {
@@ -66,9 +66,7 @@ const SHOW_DATA: ShowDetail = {
   id: "stranger-things",
   title: "Stranger Things",
   type: "TV Show",
-  bannerImage:
-    "https://deadline.com/wp-content/uploads/2025/12/stranger-things-season-5-netflix-posters.jpg",
-
+  bannerImage: "/images/stranger.png",
   posterImage:
     "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600&auto=format&fit=crop",
   imdbRating: "8.7",
@@ -241,6 +239,7 @@ export default function DetailPage() {
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const navigate = useNavigate();
   // Toast Notification Trigger
   const triggerNotification = (msg: string) => {
     // setNotificationMsg(msg);
@@ -298,16 +297,6 @@ export default function DetailPage() {
 
     enterFullscreen();
   }, [isVideoModalOpen]);
-
-  const exitFullscreen = async () => {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      }
-    } catch (error) {
-      console.error("Failed to exit fullscreen:", error);
-    }
-  };
 
   return (
     <>
@@ -399,7 +388,9 @@ export default function DetailPage() {
               {/* Primary Action Buttons */}
               <div className="flex items-center gap-3 pt-2 flex-wrap">
                 <button
-                  onClick={() => handlePlayEpisode()}
+                  onClick={() => {
+                    navigate("/watch/" + movie?.id);
+                  }}
                   className="flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-black hover:bg-neutral-200 text-sm font-bold transition-all transform hover:scale-105 active:scale-95 shadow-xl"
                 >
                   <Play className="w-4 h-4 fill-black text-black" />
@@ -463,9 +454,6 @@ export default function DetailPage() {
           <div className="lg:col-span-9">
             <div className="flex items-center justify-between mb-5 px-3 pt-6">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-semibold">
-                  The Cast
-                </p>
                 <h2 className="text-xl font-semibold text-white mt-1">
                   Cast & Characters
                 </h2>
@@ -510,11 +498,13 @@ export default function DetailPage() {
               ))}
             </div>
             <section className="max-w-4xl px-3 py-16">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-semibold mb-3">
-                Synopsis
-              </p>
+              <div>
+                <h2 className="text-xl font-semibold text-white mt-1">
+                  Synopsis
+                </h2>
+              </div>
 
-              <p className="text-sm md:text-base leading-7 text-neutral-400">
+              <p className="text-sm mt-2 md:text-base leading-7 text-neutral-400">
                 {movie?.description || SHOW_DATA.description}
               </p>
             </section>
@@ -699,184 +689,6 @@ export default function DetailPage() {
           </div>
         </div>
       </div>
-
-      {isVideoModalOpen && currentPlayingEpisode && (
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center animate-fade-in">
-          {/* Simulated Video Canvas Frame */}
-          <div
-            ref={playerRef}
-            className="relative w-full h-full flex flex-col justify-between overflow-hidden group select-none"
-            onMouseMove={() => setShowControls(true)}
-          >
-            {/* Backdrop Video Simulation Poster */}
-            <img
-              src={currentPlayingEpisode.thumbnail}
-              alt="Video Playing"
-              className="absolute inset-0 w-full h-full object-cover opacity-80 filter brightness-90"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/80 pointer-events-none" />
-
-            {/* TOP OVERLAY CONTROLS */}
-            <div
-              className={`relative z-20 p-6 flex items-center justify-between transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}
-            >
-              <button
-                onClick={() => setIsVideoModalOpen(false)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white text-xs font-bold border border-white/20 transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Show Details</span>
-              </button>
-
-              <div className="text-center">
-                <h3 className="text-sm font-bold text-white drop-shadow-md">
-                  {SHOW_DATA.title}
-                </h3>
-                <p className="text-xs text-neutral-300 font-medium">
-                  S{currentPlayingEpisode.season} E
-                  {currentPlayingEpisode.episodeNum}:{" "}
-                  {currentPlayingEpisode.title}
-                </p>
-              </div>
-
-              <button
-                onClick={() => setIsVideoModalOpen(false)}
-                className="p-3 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white border border-white/20 transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* CENTER PLAY/PAUSE BIG OVERLAY */}
-            <div className="relative z-20 self-center my-auto">
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-xl text-white flex items-center justify-center border border-white/30 shadow-2xl transition-all transform hover:scale-110 active:scale-95"
-              >
-                {isPlaying ? (
-                  <Pause className="w-8 h-8 fill-white" />
-                ) : (
-                  <Play className="w-8 h-8 fill-white ml-1" />
-                )}
-              </button>
-            </div>
-
-            {/* BOTTOM PLAYBACK CONTROLS BAR */}
-            <div
-              className={`relative z-20 p-6 md:p-8 flex flex-col gap-4 bg-gradient-to-t from-black to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}
-            >
-              {/* Scrub Line */}
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-neutral-300">
-                  {Math.floor((playerProgress * 50) / 100)}:12
-                </span>
-
-                <div
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const pos = (e.clientX - rect.left) / rect.width;
-                    setPlayerProgress(pos * 100);
-                  }}
-                  className="flex-1 h-2 bg-white/20 rounded-full cursor-pointer overflow-hidden relative group/scrubber"
-                >
-                  <div
-                    className="h-full bg-red-600 rounded-full relative"
-                    style={{ width: `${playerProgress}%` }}
-                  >
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover/scrubber:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-
-                <span className="text-xs font-semibold text-neutral-300">
-                  {currentPlayingEpisode.duration}
-                </span>
-              </div>
-
-              {/* Player Button Toolbar */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="p-3 rounded-full bg-white text-black hover:bg-neutral-200 transition-all shadow-md"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5 fill-black" />
-                    ) : (
-                      <Play className="w-5 h-5 fill-black ml-0.5" />
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      setPlayerProgress((prev) => Math.max(0, prev - 5))
-                    }
-                    className="text-white/80 hover:text-white transition-colors"
-                  >
-                    <RotateCcw className="w-5 h-5" />
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      setPlayerProgress((prev) => Math.min(100, prev + 5))
-                    }
-                    className="text-white/80 hover:text-white transition-colors"
-                  >
-                    <RotateCw className="w-5 h-5" />
-                  </button>
-
-                  {/* Volume Control */}
-                  <div className="flex items-center gap-2 ml-2">
-                    <button
-                      onClick={() => setVolume((prev) => (prev === 0 ? 80 : 0))}
-                      className="text-white/80 hover:text-white transition-colors"
-                    >
-                      {volume === 0 ? (
-                        <VolumeX className="w-5 h-5" />
-                      ) : (
-                        <Volume2 className="w-5 h-5" />
-                      )}
-                    </button>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={volume}
-                      onChange={(e) => setVolume(Number(e.target.value))}
-                      className="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-red-600"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() =>
-                      triggerNotification("Subtitles: English [CC]")
-                    }
-                    className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 text-xs font-bold text-white border border-white/10 transition-colors"
-                  >
-                    CC
-                  </button>
-
-                  <button
-                    onClick={() => triggerNotification("Speed: 1.0x Normal")}
-                    className="text-xs font-bold text-white/80 hover:text-white transition-colors"
-                  >
-                    1.0x
-                  </button>
-
-                  <button
-                    // onClick={toggleFullscreen}
-                    className="text-white/80 hover:text-white transition-colors"
-                    title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                  >
-                    <Maximize className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
