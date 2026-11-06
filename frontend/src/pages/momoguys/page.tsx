@@ -110,37 +110,15 @@ export default function MOMOGUYS() {
   const [currentReview, setCurrentReview] = useState(0);
 
   // State for Cart Drawer, Search Overlay, Interactive Customizer, Carousel, etc.
-  const [cart, setCart] = useState<{ item: MenuItem; quantity: number }[]>([
+  const [cart] = useState<{ item: MenuItem; quantity: number }[]>([
     { item: MENU_ITEMS[0], quantity: 1 },
   ]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [activeItemModal, setActiveItemModal] = useState<MenuItem | null>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [addedNotice, setAddedNotice] = useState<string | null>(null);
 
   // Calculate totals
   const totalItemsCount = cart.reduce((sum, i) => sum + i.quantity, 0);
-
-  // Cart operations
-  const addToCart = (item: MenuItem) => {
-    setCart((prevCart) => {
-      const existing = prevCart.find((ci) => ci.item.id === item.id);
-      if (existing) {
-        return prevCart.map((ci) =>
-          ci.item.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci,
-        );
-      }
-      return [...prevCart, { item, quantity: 1 }];
-    });
-    setAddedNotice(`Added ${item.name} to order!`);
-    setTimeout(() => setAddedNotice(null), 3000);
-  };
 
   const filteredMenuItems = useMemo(() => {
     return MENU_ITEMS.filter((item) => {
@@ -223,7 +201,6 @@ export default function MOMOGUYS() {
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Search Toggle Button */}
               <button
-                onClick={() => setIsSearchOpen(true)}
                 aria-label="Search items"
                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#640B0F] hover:bg-[#FAF3E0] hover:text-[#800F15] text-[#FAF3E0] flex items-center justify-center transition-all duration-300 border border-[#800F15] shadow-md group"
               >
@@ -232,7 +209,6 @@ export default function MOMOGUYS() {
 
               {/* Cart Button with Count Badge */}
               <button
-                onClick={() => setIsCartOpen(true)}
                 aria-label="View Cart"
                 className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#640B0F] hover:bg-[#FAF3E0] hover:text-[#800F15] text-[#FAF3E0] flex items-center justify-center transition-all duration-300 border border-[#800F15] shadow-md group"
               >
@@ -245,10 +221,7 @@ export default function MOMOGUYS() {
               </button>
 
               {/* Header "ORDER NOW" Pill Button */}
-              <button
-                onClick={() => addToCart(MENU_ITEMS[0])}
-                className="bg-[#FAF3E0] text-[#800F15] font-black text-xs sm:text-sm px-4 sm:px-6 py-2.5 sm:py-3 rounded-full hover:bg-[#F9C349] transition-all duration-300 tracking-wider uppercase shadow-lg border-2 border-[#800F15] active:scale-95 flex items-center gap-1.5"
-              >
+              <button className="bg-[#FAF3E0] text-[#800F15] font-black text-xs sm:text-sm px-4 sm:px-6 py-2.5 sm:py-3 rounded-full hover:bg-[#F9C349] transition-all duration-300 tracking-wider uppercase shadow-lg border-2 border-[#800F15] active:scale-95 flex items-center gap-1.5">
                 <span>ORDER NOW</span>
               </button>
             </div>
@@ -269,10 +242,7 @@ export default function MOMOGUYS() {
 
               {/* Bottom-Left CTA Button */}
               <div className="mt-8 sm:mt-12 lg:mt-16 flex items-center">
-                <button
-                  onClick={() => addToCart(MENU_ITEMS[0])}
-                  className="group flex items-center gap-3 bg-[#FAF3E0] text-[#800F15] font-black text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3 rounded-full hover:bg-[#F9C349] transition-all duration-300 shadow-xl border-2 border-[#800F15]"
-                >
+                <button className="group flex items-center gap-3 bg-[#FAF3E0] text-[#800F15] font-black text-xs sm:text-sm px-5 sm:px-6 py-2.5 sm:py-3 rounded-full hover:bg-[#F9C349] transition-all duration-300 shadow-xl border-2 border-[#800F15]">
                   <span className="tracking-widest">ORDER NOW</span>
                   <div className="w-7 h-7 rounded-full bg-[#800F15] text-[#FAF3E0] flex items-center justify-center group-hover:bg-[#640B0F] group-hover:rotate-45 transition-all duration-300">
                     <ArrowUpRight className="w-4 h-4" />
@@ -286,10 +256,7 @@ export default function MOMOGUYS() {
             {/* CENTER & RIGHT COLUMN: Hand Holding Cheeseburger Cutout + Annotations */}
             <div className="lg:col-span-6 relative flex justify-center items-center py-6 lg:py-0">
               {/* Floating Bottom-Right Mini Product Preview Box */}
-              <div
-                onClick={() => addToCart(MENU_ITEMS[2])}
-                className="absolute -bottom-2 right-2 sm:right-4 bg-[#640B0F]/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl flex items-center gap-3 border-2 border-[#800F15] shadow-2xl max-w-[210px] z-30 cursor-pointer hover:scale-105 transition-transform group"
-              >
+              <div className="absolute -bottom-2 right-2 sm:right-4 bg-[#640B0F]/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl flex items-center gap-3 border-2 border-[#800F15] shadow-2xl max-w-[210px] z-30 cursor-pointer hover:scale-105 transition-transform group">
                 <div className="relative overflow-hidden rounded-xl w-14 h-14 flex-shrink-0">
                   <img
                     src="https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=200&q=80"
@@ -439,10 +406,7 @@ export default function MOMOGUYS() {
             {/* Bottom Controls / Action */}
             <div className="flex items-center justify-between pt-2">
               <span className="text-lg sm:text-xl font-black">$9.49</span>
-              <button
-                onClick={() => addToCart(MENU_ITEMS[1])}
-                className="bg-[#800F15] text-[#FAF3E0] text-xs font-black px-5 py-2.5 rounded-full hover:bg-[#640B0F] transition-colors flex items-center gap-2 shadow-md"
-              >
+              <button className="bg-[#800F15] text-[#FAF3E0] text-xs font-black px-5 py-2.5 rounded-full hover:bg-[#640B0F] transition-colors flex items-center gap-2 shadow-md">
                 <span>ADD TO ORDER</span>
                 <Plus className="w-4 h-4" />
               </button>
@@ -501,7 +465,6 @@ export default function MOMOGUYS() {
                 )}
 
                 <button
-                  onClick={() => setActiveItemModal(item)}
                   className="absolute top-4 right-4 w-7 h-7 rounded-full bg-[#800F15] text-[#FAF3E0] flex items-center justify-center hover:scale-110 transition-transform cursor-pointer z-10"
                   title="View details"
                 >
@@ -509,10 +472,7 @@ export default function MOMOGUYS() {
                 </button>
 
                 {/* Burger Image Container */}
-                <div
-                  onClick={() => setActiveItemModal(item)}
-                  className="w-full h-48 my-2 flex items-center justify-center overflow-hidden rounded-2xl cursor-pointer relative"
-                >
+                <div className="w-full h-48 my-2 flex items-center justify-center overflow-hidden rounded-2xl cursor-pointer relative">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -534,10 +494,7 @@ export default function MOMOGUYS() {
                     {item.description}
                   </p>
 
-                  <button
-                    onClick={() => addToCart(item)}
-                    className="w-full bg-[#800F15] text-[#FAF3E0] font-black text-xs py-2.5 rounded-full hover:bg-[#640B0F] transition-colors flex items-center justify-center gap-2 shadow-md cursor-pointer uppercase"
-                  >
+                  <button className="w-full bg-[#800F15] text-[#FAF3E0] font-black text-xs py-2.5 rounded-full hover:bg-[#640B0F] transition-colors flex items-center justify-center gap-2 shadow-md cursor-pointer uppercase">
                     <span>ADD TO ORDER</span>
                     <Plus className="w-4 h-4" />
                   </button>

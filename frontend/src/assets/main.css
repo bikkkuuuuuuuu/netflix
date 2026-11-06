@@ -90,12 +90,19 @@
   border: none;
   padding: 0;
   margin: 0;
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
 }
 body {
   font-family: "Manrope", sans-serif;
   background-color: #0d0c0c;
   scrollbar-width: none;
-
+  min-height: 100vh;
   -ms-overflow-style: none;
   /* overflow: hidden; */
 }

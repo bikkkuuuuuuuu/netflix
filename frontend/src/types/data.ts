@@ -11,6 +11,7 @@ export interface MoviePerson {
   name: string;
 }
 
+
 export interface MovieVideo {
   provider: VideoProvider;
   sourceKey: string;
@@ -40,7 +41,7 @@ export interface Movie {
   directors: MoviePerson[];
   writers: MoviePerson[];
 
-  poster: string | null;
+  poster: string | "";
   backdrop: string | null;
   logo: string | null;
   trailerUrl: string | null;
@@ -53,7 +54,8 @@ export interface Movie {
   status: MovieStatus;
   createdBy: string;
   updatedBy: string | null;
-
+  createdAt?: string;
+  updatedAt?: string;
   __v: number;
 }
 
@@ -67,3 +69,16 @@ export interface MovieListResponse {
     totalDate: number;
   };
 }
+
+export interface WatchHistory {
+  _id: string;
+  movie: Movie;
+  user?: string;
+  completed: boolean;
+  duration: number;
+  progress: number;
+  lastWatchedAt: string;
+  __v: number;
+}
+
+

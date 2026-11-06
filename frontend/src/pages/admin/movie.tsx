@@ -13,13 +13,12 @@ import {
   RefreshCw,
   Trash2,
   Upload,
-  Video,
   X,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
 import movieSvc from "@/services/movie.service";
-import { Movie } from "@/types/data";
-import { formatDateString } from "@/lib/utils";
+import { Movie, ProcessingStatus } from "@/types/data";
+import { formatDateString, getBackendUrl } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 function Section({
@@ -66,33 +65,15 @@ function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function StatusDot({ status }: { status: "ready" | "processing" | "queued" }) {
+function StatusDot({ status }: { status: ProcessingStatus }) {
   const styles = {
     ready: "bg-emerald-400",
     processing: "bg-amber-400",
     queued: "bg-red-400",
+    failed: "bg-red-200",
   };
 
   return <span className={`h-1.5 w-1.5 rounded-full ${styles[status]}`} />;
-}
-
-function ProcessingStatus({
-  status,
-}: {
-  status: "ready" | "processing" | "queued";
-}) {
-  const labels = {
-    ready: "Ready",
-    processing: "Processing",
-    queued: "Queued",
-  };
-
-  return (
-    <div className="flex items-center gap-2 text-sm text-white/60">
-      <StatusDot status={status} />
-      {labels[status]}
-    </div>
-  );
 }
 
 function ActionButton({
@@ -272,10 +253,13 @@ export default function AdminMovieDetail() {
 
               {menuOpen && (
                 <div className="absolute right-0 top-12 w-48 overflow-hidden rounded-xl border border-white/[0.08] bg-[#18191c] p-1 shadow-2xl z-10">
-                  <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/65 hover:bg-white/[0.05] hover:text-white">
+                  <NavLink
+                    to={"/watch/" + movieData?._id}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/65 hover:bg-white/[0.05] hover:text-white"
+                  >
                     <ExternalLink size={15} />
                     Open playback
-                  </button>
+                  </NavLink>
 
                   <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/65 hover:bg-white/[0.05] hover:text-white">
                     <RefreshCw size={15} />
@@ -306,7 +290,7 @@ export default function AdminMovieDetail() {
         <section className="relative overflow-hidden rounded-2xl  bg-[#131416]">
           <div className="relative h-[340px] overflow-hidden">
             <img
-              src={movieData?.backdrop || ""}
+              src={getBackendUrl(movieData?.backdrop as string) ?? ""}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
             />
@@ -319,7 +303,7 @@ export default function AdminMovieDetail() {
               <div className="flex items-end gap-6">
                 <div className="hidden h-[190px] w-[128px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#18191c] shadow-2xl md:block">
                   <img
-                    src={movieData?.poster || ""}
+                    src={getBackendUrl(movieData?.poster as string) ?? ""}
                     alt={movieData?.title}
                     className="h-full w-full object-cover"
                   />
@@ -604,7 +588,7 @@ export default function AdminMovieDetail() {
 
                   <div className="aspect-[2/3] overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03]">
                     <img
-                      src={movieData?.poster || ""}
+                      src={getBackendUrl(movieData?.poster as string) ?? ""}
                       alt={movieData?.title}
                       className="h-full w-full object-cover"
                     />
@@ -620,7 +604,7 @@ export default function AdminMovieDetail() {
 
                   <div className="aspect-video overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03]">
                     <img
-                      src={movieData?.backdrop || ""}
+                      src={getBackendUrl(movieData?.backdrop as string) ?? ""}
                       alt=""
                       className="h-full w-full object-cover"
                     />
@@ -658,10 +642,13 @@ export default function AdminMovieDetail() {
                 <div className="flex gap-2">
                   <CopyButton value={movieData?.video?.hlsUrl || ""} />
 
-                  <button className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 text-xs text-white/50 hover:bg-white/[0.06] hover:text-white">
+                  <NavLink
+                    to={"/watch/" + movieData?._id}
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 text-xs text-white/50 hover:bg-white/[0.06] hover:text-white"
+                  >
                     <ExternalLink size={14} />
                     Open
-                  </button>
+                  </NavLink>
                 </div>
               </div>
             </Section>

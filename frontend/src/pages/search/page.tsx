@@ -1,8 +1,12 @@
 import MovieSlider from "@/components/Cards/cards";
 import RightSidebar from "@/components/RightSideBar/sidebar";
-import { MOVIES, SuggestedMovies } from "@/data/movies";
+import { MOVIES } from "@/data/movies";
+import { normalizeMovies } from "@/lib/utils";
+import movieSvc from "@/services/movie.service";
+import { Movie } from "@/types/data";
 import { Command, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+// import { useForm } from "react-hook-form";
 
 const SearchPage = () => {
   type Filter = {
@@ -38,6 +42,57 @@ const SearchPage = () => {
     },
   ];
   const [activeFilter, setActiveFilter] = useState("all");
+  const [newlyArrived, setNewlyArrived] = useState<Movie[] | []>([]);
+  // const [searchResults, setSearchResults] = useState<Movie[] | []>([]);
+
+  const [movies, setMovies] = useState<Movie[] | []>([]);
+  // const [recentlyWatched, setRecentlyWatched] = useState<any[]>([]);
+
+
+  // const fetchSearch = async (search: string) => {
+  //   try {
+  //     const response = await movieSvc.home(18, search);
+  //     const moviesWithUrls = normalizeMovies(response.detail);
+  //     setSearchResults(moviesWithUrls);
+  //   } catch (exception) {
+  //     console.log(exception);
+  //   }
+  // };
+  const fetchforHome = async () => {
+    try {
+      const response = await movieSvc.home(6, "");
+      const moviesWithUrls = normalizeMovies(response.detail);
+      setMovies(moviesWithUrls);
+      console.log(movies);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  const fetchNewlyArrived = async (limit = 6) => {
+    try {
+      const response = await movieSvc.newlyArrived(limit);
+      const movies = normalizeMovies(response.detail.slice(2, 6));
+      setNewlyArrived(movies);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+
+  // const fetchSuggested = async () => {
+  //   try {
+  //     const response = await movieSvc.suggested();
+  //     // setRecentlyWatched(response.detail);
+
+  //     console.log(response);
+  //   } catch (exception) {
+  //     console.log(exception);
+  //   }
+  // };
+
+  useEffect(() => {
+    fetchNewlyArrived(6);
+    fetchforHome();
+  }, []);
 
   return (
     <div className="flex-1 h-[100vh] flex flex-col xl:flex-row  overflow-hidden relative">
@@ -51,7 +106,7 @@ const SearchPage = () => {
           <div className="relative group">
             <div className="absolute inset-0  rounded-4xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-300"></div>
 
-            <div className="relative flex items-center glass-panel rounded-[2rem] p-2.5 sm:p-3 pl-6 pr-4 shadow-2xl border border-white/10 focus-within:border-indigo-500/80 transition-all duration-300">
+            <div className="relative flex items-center  glass-panel rounded-[2rem] p-2.5 sm:p-3 pl-6 pr-4 shadow-2xl border border-white/10 focus-within:border-white-500/80 transition-all duration-300">
               <Search className="h-5 w-5 mx-4 text-slate-400 " />
               <input
                 type="text"
@@ -61,6 +116,12 @@ const SearchPage = () => {
                 // autocomplete="off"
               />
 
+              {/* <TextInputField
+                name="search"
+                control={}
+                errMsg=""
+                placeholder="Search movies, TV shows, actors, directors..."
+              /> */}
               <button
                 id="clearSearchBtn"
                 className="hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-full transition-all mr-2"
@@ -137,12 +198,8 @@ const SearchPage = () => {
 
         <MovieSlider title="Search Results" MOVIES={MOVIES} />
 
-        <MovieSlider mapItems={3} MOVIES={MOVIES} />
-        <MovieSlider
-          mapItems={3}
-          title="Suggested For You"
-          MOVIES={SuggestedMovies}
-        />
+        <MovieSlider mapItems={3} MOVIES={newlyArrived} />
+        <MovieSlider mapItems={3} title="Suggested For You" MOVIES={movies} />
 
         <div
           id="emptyState"

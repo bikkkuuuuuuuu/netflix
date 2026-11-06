@@ -1,6 +1,5 @@
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
-
 import {
   ArrowLeft,
   Check,
@@ -17,44 +16,33 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { useNavigate, useParams } from "react-router-dom";
-
-const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:9005"
-).replace(/\/$/, "");
+import movieSvc from "@/services/movie.service";
+import IntroVideo from "@/components/intro/introVideo";
+import watchHistorySvc from "@/services/watchHistory.service";
 
 interface SubtitleTrack {
   label: string;
-
   language: string;
-
   src: string;
-
   default?: boolean;
 }
 
+type AudioTrackItem = {
+  id: string;
+  label: string;
+  language: string;
+  enabled: boolean;
+};
+type PlayerType = ReturnType<typeof videojs>;
 interface PlaybackResponse {
   title: string;
-
   episodeTitle?: string | null;
-
   hlsUrl: string;
-
   poster?: string;
-
   subtitles?: SubtitleTrack[];
 }
-
-const SAMPLE_PLAYBACK: PlaybackResponse = {
-  title: "Big Buck Bunny",
-  episodeTitle: "A Sample Movie",
-  // Public HLS test stream. Replace this with your own stream later.
-  hlsUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-  subtitles: [],
-};
 
 type QualityLevel = {
   width?: number;
@@ -77,6 +65,13 @@ type VhsRepresentation = {
   enabled: (enabled?: boolean) => boolean | void;
 };
 
+interface HlsSubtitleTrack {
+  id: string;
+  label: string;
+  language: string;
+  kind: string;
+}
+
 const getVhsRepresentations = (player: any): VhsRepresentation[] => {
   try {
     const tech = player.tech(true) as unknown as {
@@ -89,7 +84,7 @@ const getVhsRepresentations = (player: any): VhsRepresentation[] => {
   }
 };
 
-type MenuName = "quality" | "audio" | "subtitles" | "speed" | null;
+type MenuName = "settings" | "quality" | "audio" | "subtitles" | "speed" | null;
 
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -108,22 +103,11 @@ const formatTime = (seconds: number) => {
   return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 };
 
-const getAbsoluteUrl = (url: string) => {
-  if (/^(https?:)?\/\//i.test(url) || url.startsWith("blob:")) {
-    return url;
-  }
-
-  return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
-};
-
-const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error) return error.message;
-
-  return "An unexpected error occurred.";
-};
+const getSubtitleTrackKey = (track: TextTrack, index: number) =>
+  `${track.kind}:${track.language}:${track.label}:${index}`;
 
 const Player = () => {
-  const { movieId } = useParams<{ movieId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const playerRef = useRef<PlayerType | null>(null);
@@ -150,153 +134,83 @@ const Player = () => {
   const [selectedAudio, setSelectedAudio] = useState(0);
   const [selectedSubtitle, setSelectedSubtitle] = useState<string>("off");
   const [hasStarted, setHasStarted] = useState(false);
-  const subtitleTracks = playback?.subtitles ?? [];
+  const [subtitleTracks, setSubtitleTracks] = useState<HlsSubtitleTrack[]>([]);
+  const [showIntro, setShowIntro] = useState(false);
 
-  // Fetch playback information for the route's movie ID.
-
-  // useEffect(() => {
-
-  //   if (!movieId) {
-
-  //     setError("No movie ID was provided.");
-
-  //     setLoading(false);
-
-  //     return;
-
-  //   }
-
-  //   const controller = new AbortController();
-
-  //   const fetchPlayback = async () => {
-
-  //     setLoading(true);
-
-  //     setError("");
-
-  //     setPlayback(null);
-
-  //     try {
-
-  //       const response = await fetch(
-
-  //         `${API_BASE_URL}/api/v1/movies/${encodeURIComponent(
-
-  //           movieId,
-
-  //         )}/playback`,
-
-  //         {
-
-  //           method: "GET",
-
-  //           credentials: "include",
-
-  //           signal: controller.signal,
-
-  //           headers: {
-
-  //             Accept: "application/json",
-
-  //           },
-
-  //         },
-
-  //       );
-
-  //       if (!response.ok) {
-
-  //         const body = await response.json().catch(() => null);
-
-  //         throw new Error(
-
-  //           body?.message ??
-
-  //             body?.error ??
-
-  //             `Unable to load playback information (${response.status}).`,
-
-  //         );
-
-  //       }
-
-  //       const data: PlaybackResponse = await response.json();
-
-  //       if (!data.hlsUrl || !data.title) {
-
-  //         throw new Error(
-
-  //           "The playback response is missing the movie title or HLS URL.",
-
-  //         );
-
-  //       }
-
-  //       setPlayback({
-
-  //         ...data,
-
-  //         hlsUrl: getAbsoluteUrl(data.hlsUrl),
-
-  //         poster: data.poster ? getAbsoluteUrl(data.poster) : undefined,
-
-  //         subtitles: (data.subtitles ?? []).map((track) => ({
-
-  //           ...track,
-
-  //           src: getAbsoluteUrl(track.src),
-
-  //         })),
-
-  //       });
-
-  //     } catch (fetchError) {
-
-  //       if (controller.signal.aborted) return;
-
-  //       setError(getErrorMessage(fetchError));
-
-  //     } finally {
-
-  //       if (!controller.signal.aborted) {
-
-  //         setLoading(false);
-
-  //       }
-
-  //     }
-
-  //   };
-
-  //   void fetchPlayback();
-
-  //   return () => controller.abort();
-
-  // }, [movieId]);
+  const introPlayedRef = useRef(false);
 
   useEffect(() => {
-    setLoading(true);
-
-    setError("");
-
-    const timeout = window.setTimeout(() => {
-      setPlayback(SAMPLE_PLAYBACK);
-
+    if (!id) {
+      setError("No movie ID was provided.");
+      setPlayback(null);
       setLoading(false);
-    }, 400);
+      return;
+    }
+    introPlayedRef.current = false;
+    setShowIntro(false);
 
-    return () => window.clearTimeout(timeout);
-  }, [movieId]);
+    const controller = new AbortController();
+    // const hlsUrl =
+    //   "https://netflix-streaming-videos-s3-bucket.s3.ap-southeast-2.amazonaws.com/movies/6ae9b460f3a107a06ef73916/hls/master.m3u8";
+
+    const fetchMovie = async () => {
+      setLoading(true);
+      setError("");
+      setPlayback(null);
+
+      try {
+        // Replace this with your existing movie detail service method.
+        const response = await movieSvc.detail(id);
+        if (controller.signal.aborted) return;
+        const movie = response.detail;
+        if (!movie) {
+          throw new Error("Movie not found.");
+        }
+        if (!movie.video?.hlsUrl) {
+          throw new Error("The HLS stream is not available for this movie.");
+        }
+        const baseUrl = import.meta.env.VITE_APP_API_URL;
+        setPlayback({
+          title: movie.title,
+          episodeTitle: null,
+          hlsUrl: new URL(movie.video.hlsUrl, baseUrl).href,
+          // hlsUrl,
+          poster: movie.poster
+            ? new URL(movie.poster, baseUrl).href
+            : undefined,
+          subtitles: [],
+        });
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error("Failed to fetch movie:", err);
+        setError(err instanceof Error ? err.message : "Failed to load movie.");
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+    void fetchMovie();
+    return () => controller.abort();
+  }, [id]);
+
   const togglePlay = useCallback(() => {
     const player = playerRef.current;
 
     if (!player || player.isDisposed()) return;
 
     if (player.paused()) {
-      void player.play()?.catch(() => {
-        setError(
-          "Playback could not start. Check that the video is available and try again.",
-        );
+      // Play the cinematic intro once for this title.
+      if (!introPlayedRef.current) {
+        introPlayedRef.current = true;
+        setShowIntro(true);
+        setShowControls(false);
+        return;
+      }
+
+      void player.play()?.catch((error: any) => {
+        console.error("Playback failed:", error);
+        setError("Playback could not start. Please try again.");
       });
     } else {
       player.pause();
@@ -309,27 +223,30 @@ const Player = () => {
 
     const current = player.currentTime() ?? 0;
 
-    const total = player.duration();
+    const total = player.duration() ?? 0;
 
     if (!Number.isFinite(total)) return;
 
     player.currentTime(Math.max(0, Math.min(total, current + seconds)));
   }, []);
 
-  containerRef?.current?.requestFullscreen();
+  // containerRef?.current?.requestFullscreen();
   const toggleFullscreen = useCallback(async () => {
     const container = containerRef.current;
 
     if (!container) return;
 
     try {
-      if (document.fullscreenElement) {
+      if (document.fullscreenElement === container) {
         await document.exitFullscreen();
+      } else if (!document.fullscreenElement) {
+        await container.requestFullscreen();
       } else {
+        await document.exitFullscreen();
         await container.requestFullscreen();
       }
-    } catch (fullscreenError) {
-      console.error("Fullscreen error:", fullscreenError);
+    } catch (error) {
+      console.error("Unable to toggle fullscreen:", error);
     }
   }, []);
 
@@ -364,30 +281,20 @@ const Player = () => {
 
     const player = videojs(videoElement, {
       controls: false,
-
-      autoplay: false,
-
+      autoplay: "any",
+      muted: false,
       preload: "auto",
-
       fluid: false,
-
       responsive: true,
-
       playsinline: true,
-
       poster: playback.poster,
-
       liveui: false,
-
       html5: {
         vhs: {
           overrideNative: true,
-
           enableLowInitialPlaylist: true,
         },
-
         nativeAudioTracks: false,
-
         nativeVideoTracks: false,
       },
 
@@ -417,12 +324,14 @@ const Player = () => {
     };
 
     const syncVolume = () => {
-      setVolume(player.volume());
-      setIsMuted(player.muted() || player.volume() === 0);
-    };
+      const currentVolume = player.volume();
 
+      setVolume(typeof currentVolume === "number" ? currentVolume : 1);
+      setIsMuted(player.muted() || currentVolume === 0);
+    };
     const syncTracks = () => {
       const representations = getVhsRepresentations(player);
+
       setQualityLevels(
         representations.map((representation) => ({
           width: representation.width,
@@ -431,11 +340,16 @@ const Player = () => {
           enabled: Boolean(representation.enabled()),
         })),
       );
+
       const tracks = player.audioTracks?.();
+
       if (tracks) {
+        const trackList = Array.from(
+          tracks as unknown as ArrayLike<AudioTrackItem>,
+        );
         const nextTracks: AudioTrack[] = [];
-        for (let index = 0; index < tracks.length; index += 1) {
-          const track = tracks[index];
+
+        trackList.forEach((track, index) => {
           nextTracks.push({
             id: track.id,
             label: track.label || track.language || `Audio ${index + 1}`,
@@ -446,10 +360,12 @@ const Player = () => {
           if (track.enabled) {
             setSelectedAudio(index);
           }
-        }
+        });
 
         setAudioTracks(nextTracks);
       }
+
+      syncSubtitleTracks();
     };
 
     const handlePlay = () => {
@@ -464,6 +380,40 @@ const Player = () => {
     const handlePause = () => setIsPlaying(false);
 
     const handleWaiting = () => setIsBuffering(true);
+
+    const syncSubtitleTracks = () => {
+      const tracks = Array.from(
+        player.textTracks() as unknown as ArrayLike<TextTrack>,
+      );
+      const nextTracks: HlsSubtitleTrack[] = [];
+
+      let activeTrack = "off";
+
+      tracks.forEach((track, index) => {
+        if (track.kind !== "subtitles" && track.kind !== "captions") {
+          return;
+        }
+
+        const id = getSubtitleTrackKey(track, index);
+
+        nextTracks.push({
+          id,
+          label:
+            track.label ||
+            track.language ||
+            `Subtitle ${nextTracks.length + 1}`,
+          language: track.language || "und",
+          kind: track.kind,
+        });
+
+        if (track.mode === "showing") {
+          activeTrack = id;
+        }
+      });
+
+      setSubtitleTracks(nextTracks);
+      setSelectedSubtitle(activeTrack);
+    };
 
     const handleCanPlay = () => {
       setIsBuffering(false);
@@ -480,6 +430,14 @@ const Player = () => {
     const handleError = () => {
       const mediaError = player.error();
 
+      console.error("Video.js playback error:", {
+        code: mediaError?.code,
+        message: mediaError?.message,
+        currentSrc: player.currentSrc(),
+        readyState: videoElement.readyState,
+        networkState: videoElement.networkState,
+      });
+
       setIsBuffering(false);
 
       setError(
@@ -487,7 +445,6 @@ const Player = () => {
           "The video could not be played. Check the stream URL, network access, and HLS configuration.",
       );
     };
-
     const handleLoadedMetadata = () => {
       syncTime();
 
@@ -518,71 +475,55 @@ const Player = () => {
 
     player.on("error", handleError);
 
-    // Subtitle tracks are added as WebVTT remote text tracks.
-
-    // Keep them in the player rather than rendering custom captions.
-
-    for (const track of playback.subtitles ?? []) {
-      player.addRemoteTextTrack(
-        {
-          kind: "subtitles",
-
-          src: track.src,
-
-          srclang: track.language,
-
-          label: track.label,
-
-          default: Boolean(track.default),
-        },
-
-        false,
-      );
-    }
-
-    // Do not autoplay here. Browser autoplay policies may block
-
-    // playback without a user gesture.
-
     player.ready(() => {
       player.volume(0.8);
 
       syncTracks();
+
+      const textTracks = Array.from(
+        player.textTracks() as unknown as ArrayLike<TextTrack>,
+      );
+
+      textTracks.forEach((track) => {
+        if (track.kind === "subtitles" || track.kind === "captions") {
+          track.mode = "disabled";
+        }
+      });
+
+      setSelectedSubtitle("off");
+
+      // Start playback automatically.
+      if (!introPlayedRef.current) {
+        introPlayedRef.current = true;
+        setShowIntro(true);
+        setShowControls(false);
+      } else {
+        void player.play()?.catch((error: any) => {
+          console.error("Autoplay failed:", error);
+          setShowControls(true);
+        });
+      }
     });
 
     return () => {
       player.off("timeupdate", syncTime);
-
       player.off("durationchange", syncTime);
-
       player.off("volumechange", syncVolume);
-
       player.off("play", handlePlay);
-
       player.off("pause", handlePause);
-
       player.off("waiting", handleWaiting);
-
       player.off("stalled", handleWaiting);
-
       player.off("canplay", handleCanPlay);
-
       player.off("playing", handlePlaying);
-
       player.off("loadedmetadata", handleLoadedMetadata);
-
       player.off("loadeddata", syncTracks);
-
       player.off("error", handleError);
-
       if (hideControlsTimerRef.current) {
         clearTimeout(hideControlsTimerRef.current);
       }
-
       if (!player.isDisposed()) {
         player.dispose();
       }
-
       playerRef.current = null;
     };
   }, [playback]);
@@ -623,40 +564,116 @@ const Player = () => {
   const changeAudio = (selectedIndex: number) => {
     const player = playerRef.current;
 
-    const tracks = player?.audioTracks?.();
+    if (!player || player.isDisposed()) return;
+
+    const tracks = player.audioTracks?.();
 
     if (!tracks) return;
 
-    for (let index = 0; index < tracks.length; index += 1) {
-      tracks[index].enabled = index === selectedIndex;
-    }
+    const trackList = Array.from(
+      tracks as unknown as ArrayLike<AudioTrackItem>,
+    );
+
+    trackList.forEach((track, index) => {
+      track.enabled = index === selectedIndex;
+    });
 
     setSelectedAudio(selectedIndex);
-
     setMenu(null);
   };
-  const changeSubtitle = (language: string) => {
+
+  const SAVE_INTERVAL = 60; // seconds
+
+  const lastSavedProgressRef = useRef(0);
+  const saveInFlightRef = useRef(false);
+
+  useEffect(() => {
+    const player = playerRef.current;
+
+    if (!player || player.isDisposed() || !id) return;
+
+    let disposed = false;
+
+    lastSavedProgressRef.current = 0;
+    saveInFlightRef.current = false;
+
+    const saveProgress = async (force = false) => {
+      if (disposed || saveInFlightRef.current) return;
+
+      const currentTime = player.currentTime() ?? 0;
+      const duration = player.duration() ?? 0;
+
+      if (
+        !Number.isFinite(currentTime) ||
+        !Number.isFinite(duration) ||
+        duration <= 0 ||
+        currentTime < 1
+      ) {
+        return;
+      }
+
+      // Save only after at least 60 seconds of additional playback.
+      if (
+        !force &&
+        currentTime - lastSavedProgressRef.current < SAVE_INTERVAL
+      ) {
+        return;
+      }
+
+      saveInFlightRef.current = true;
+
+      try {
+        await watchHistorySvc.updateProgress({
+          movieId: id,
+          progress: currentTime,
+          duration,
+        });
+
+        lastSavedProgressRef.current = currentTime;
+      } catch (error) {
+        console.error("[WatchHistory] Failed to save:", error);
+      } finally {
+        saveInFlightRef.current = false;
+      }
+    };
+
+    const handleTimeUpdate = () => void saveProgress();
+    const handlePause = () => void saveProgress(true);
+    const handleEnded = () => void saveProgress(true);
+
+    player.on("timeupdate", handleTimeUpdate);
+    player.on("pause", handlePause);
+    player.on("ended", handleEnded);
+
+    return () => {
+      disposed = true;
+
+      player.off("timeupdate", handleTimeUpdate);
+      player.off("pause", handlePause);
+      player.off("ended", handleEnded);
+    };
+  }, [id, playback?.hlsUrl]);
+
+  const changeSubtitle = (trackId: string) => {
     const player = playerRef.current;
 
     if (!player || player.isDisposed()) return;
 
-    const tracks = player.textTracks();
+    const tracks = Array.from(
+      player.textTracks() as unknown as ArrayLike<TextTrack>,
+    );
 
-    for (let index = 0; index < tracks.length; index += 1) {
-      const track = tracks[index];
-
+    tracks.forEach((track, index) => {
       if (track.kind !== "subtitles" && track.kind !== "captions") {
-        continue;
+        return;
       }
 
-      track.mode =
-        language !== "off" && track.language === language
-          ? "showing"
-          : "disabled";
-    }
+      const id = getSubtitleTrackKey(track, index);
 
-    setSelectedSubtitle(language);
+      track.mode = trackId === id ? "showing" : "disabled";
+    });
 
+    setSelectedSubtitle(trackId);
     setMenu(null);
   };
   const changePlaybackRate = (rate: number) => {
@@ -805,8 +822,8 @@ const Player = () => {
   const selectedSubtitleLabel =
     selectedSubtitle === "off"
       ? "Off"
-      : (subtitleTracks.find((track) => track.language === selectedSubtitle)
-          ?.label ?? "Off");
+      : (subtitleTracks.find((track) => track.id === selectedSubtitle)?.label ??
+        "Off");
   const activeAudioLabel = audioTracks[selectedAudio]?.label ?? "Default";
   const handleProgressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextTime = Number(event.target.value);
@@ -818,6 +835,41 @@ const Player = () => {
     }
   };
 
+  const handleIntroComplete = useCallback(() => {
+    setShowIntro(false);
+    setShowControls(true);
+
+    const player = playerRef.current;
+
+    if (!player || player.isDisposed()) return;
+
+    void player.play()?.catch((error: any) => {
+      console.error("Playback failed after intro:", error);
+
+      // Keep the regular play button available if autoplay is blocked.
+      setShowControls(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    const enterFullscreen = async () => {
+      const container = containerRef.current;
+
+      if (!container || document.fullscreenElement) return;
+
+      try {
+        await container.requestFullscreen();
+      } catch (error) {
+        // Browsers may block fullscreen without a user gesture.
+        console.warn("Automatic fullscreen was blocked:", error);
+      }
+    };
+
+    if (!loading && playback && !error) {
+      void enterFullscreen();
+    }
+  }, [loading, playback, error]);
+
   return (
     <main
       ref={containerRef}
@@ -827,7 +879,14 @@ const Player = () => {
     >
       {/* Video surface */}
 
-      <div className="absolute inset-0 bg-black">
+      {showIntro && (
+        <IntroVideo
+          onComplete={handleIntroComplete}
+          src="/videos/cinematic-intro.mp4"
+        />
+      )}
+
+      <div className="absolute inset-0 bg-red-600">
         <video
           ref={videoElementRef}
           className="video-js vjs-big-play-centered !absolute !inset-0 !h-full !w-full"
@@ -837,19 +896,31 @@ const Player = () => {
 
         <style>{`
 
-          .video-js,
+          
 
-          .video-js .vjs-tech {
+          .video-js {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: #000;
+}
 
-            width: 100% !important;
+.video-js .vjs-tech {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  background: #000;
+}
 
-            height: 100% !important;
+.video-js video {
+  object-fit: contain;
+}
 
-            object-fit: contain;
-
-            background: #000;
-
-          }
+.video-js .vjs-poster {
+  background-size: contain !important;
+  background-position: center !important;
+}
 
           .video-js .vjs-control-bar,
 
@@ -1021,7 +1092,7 @@ const Player = () => {
               <div className="h-12 w-12 animate-spin rounded-full border-[3px] border-white/20 border-t-white" />
             )}
 
-            {!hasStarted && !isBuffering && (
+            {!hasStarted && !isBuffering && !showIntro && (
               <button
                 onClick={togglePlay}
                 aria-label="Play video"
@@ -1160,44 +1231,6 @@ const Player = () => {
                   >
                     CC
                   </button>
-
-                  {/* {menu === "subtitles" && (
-                    <div className="absolute bottom-12 right-0 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#171717] p-2 shadow-2xl">
-                      <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/45">
-                        Subtitles
-                      </p>
-
-                      <button
-                        onClick={() => changeSubtitle("off")}
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/10"
-                      >
-                        Off
-                        {selectedSubtitle === "off" && (
-                          <Check className="h-4 w-4 text-red-500" />
-                        )}
-                      </button>
-
-                      {subtitleTracks.map((track) => (
-                        <button
-                          key={`${track.language}-${track.src}`}
-                          onClick={() => changeSubtitle(track.language)}
-                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/10"
-                        >
-                          <span>{track.label}</span>
-
-                          {selectedSubtitle === track.language && (
-                            <Check className="h-4 w-4 text-red-500" />
-                          )}
-                        </button>
-                      ))}
-
-                      {subtitleTracks.length === 0 && (
-                        <p className="px-3 py-2 text-xs leading-5 text-white/45">
-                          No external subtitles are available.
-                        </p>
-                      )}
-                    </div>
-                  )} */}
                 </div>
 
                 {/* Settings menu */}
@@ -1205,7 +1238,7 @@ const Player = () => {
                 <div className="relative">
                   <button
                     onClick={() =>
-                      setMenu(menu === "quality" ? null : "quality")
+                      setMenu(menu === "settings" ? null : "settings")
                     }
                     aria-label="Playback settings"
                     className="flex items-center gap-1 rounded-md px-2 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/10 sm:px-3"
@@ -1219,7 +1252,7 @@ const Player = () => {
 
                   {menu && (
                     <div className="absolute bottom-12 right-0 w-60 overflow-hidden rounded-xl border border-white/10 bg-[#171717] p-2 shadow-2xl">
-                      {menu === "quality" && (
+                      {menu === "settings" && (
                         <>
                           <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/45">
                             Playback settings
@@ -1357,34 +1390,39 @@ const Player = () => {
                             Subtitles
                           </button>
 
-                          <button
-                            onClick={() => changeSubtitle("off")}
-                            className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-white/10"
-                          >
-                            Off
-                            {selectedSubtitle === "off" && (
-                              <Check className="h-4 w-4 text-red-500" />
-                            )}
-                          </button>
-
-                          {subtitleTracks.map((track) => (
+                          <div className="max-h-64 min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.25)_transparent]">
                             <button
-                              key={`${track.language}-${track.src}`}
-                              onClick={() => changeSubtitle(track.language)}
-                              className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/10"
+                              onClick={() => changeSubtitle("off")}
+                              className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-white/10"
                             >
-                              <span>{track.label}</span>
-
-                              {selectedSubtitle === track.language && (
-                                <Check className="h-4 w-4 text-red-500" />
+                              Off
+                              {selectedSubtitle === "off" && (
+                                <Check className="h-4 w-4 shrink-0 text-red-500" />
                               )}
                             </button>
-                          ))}
-                          {subtitleTracks.length === 0 && (
-                            <p className="px-3 py-2 text-xs leading-5 text-white/45">
-                              No external subtitles are available.
-                            </p>
-                          )}
+
+                            {subtitleTracks.map((track) => (
+                              <button
+                                key={track.id}
+                                onClick={() => changeSubtitle(track.id)}
+                                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/10"
+                              >
+                                <span className="min-w-0 truncate">
+                                  {track.label}
+                                </span>
+
+                                {selectedSubtitle === track.id && (
+                                  <Check className="h-4 w-4 shrink-0 text-red-500" />
+                                )}
+                              </button>
+                            ))}
+
+                            {subtitleTracks.length === 0 && (
+                              <p className="px-3 py-2 text-xs leading-5 text-white/45">
+                                No subtitle tracks found in the HLS manifest.
+                              </p>
+                            )}
+                          </div>
                         </>
                       )}
 

@@ -19,7 +19,6 @@ import {
   Eye,
   Download,
   Sparkles,
-  Settings,
 } from "lucide-react";
 
 type SettingsSection =

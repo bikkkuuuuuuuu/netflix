@@ -37,7 +37,7 @@ class AuthService extends HttpService {
           file: true,
         },
       );
-      return response.data;
+      return response.data.detail;
     } catch (exception) {
       throw exception;
     }

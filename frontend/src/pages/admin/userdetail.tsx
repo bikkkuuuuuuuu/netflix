@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  ArrowLeft,
   ArrowUpRight,
   Ban,
   Check,
@@ -13,16 +12,13 @@ import {
   LogOut,
   Mail,
   Monitor,
-  MoreHorizontal,
   Play,
   Smartphone,
   ShieldCheck,
   Trash2,
   Tv,
   User,
-  UserCheck,
   Users,
-  X,
 } from "lucide-react";
 
 const watchHistory = [
@@ -159,16 +155,6 @@ function Card({
     <section className={`rounded-[24px]  bg-[#131416] p-6 md:p-7 ${className}`}>
       {children}
     </section>
-  );
-}
-
-function DeviceIcon({ type }: { type: "laptop" | "phone" | "tv" }) {
-  const Icon = type === "laptop" ? Laptop : type === "phone" ? Smartphone : Tv;
-
-  return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.04]">
-      <Icon size={17} className="text-white/50" />
-    </div>
   );
 }
 

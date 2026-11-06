@@ -9,7 +9,6 @@ import {
   HardDrive,
   MemoryStick,
   Pause,
-  Play,
   RefreshCw,
   Server,
   Terminal,

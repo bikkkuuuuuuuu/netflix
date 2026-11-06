@@ -198,7 +198,7 @@ const SideBar = () => {
           ))}
         </nav>
 
-        {isAdmin ? (
+        {loggedInUser ? (
           <NavLink
             to="/profile"
             title="Profile"

@@ -9,6 +9,7 @@ export interface HeaderConfigPropsType {
     page?: number;
     limit?: number;
     search?: null | string;
+    sort?: string;
   };
   onUploadProgress?: (event: AxiosProgressEvent) => void;
 }

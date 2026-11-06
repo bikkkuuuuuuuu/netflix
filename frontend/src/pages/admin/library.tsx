@@ -20,6 +20,7 @@ import {
 import { NavLink } from "react-router-dom";
 import movieSvc from "@/services/movie.service";
 import { Movie } from "@/types/data";
+import { getBackendUrl } from "@/lib/utils";
 
 const typeOptions = [
   { label: "Everything", value: "all" },
@@ -61,7 +62,7 @@ export default function Library() {
       result = result.filter(
         (movie) =>
           movie.title.toLowerCase().includes(query) ||
-          movie.genres.toLowerCase().includes(query),
+          movie.genres.some((genre) => genre.toLowerCase().includes(query)),
       );
     }
 
@@ -356,15 +357,11 @@ export default function Library() {
   );
 }
 
-/* ========================================================================== */
-/* Recently Added                                                             */
-/* ========================================================================== */
-
 function RecentTitle({ movie }: { movie: Movie }) {
   return (
     <div className="group relative flex min-h-[270px] items-end overflow-hidden bg-[#101113] p-5 sm:min-h-[330px] sm:p-6">
       <img
-        src={"http://localhost:9005/" + movie.poster}
+        src={getBackendUrl(movie.poster) ?? ""}
         alt={movie.title}
         className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-700 group-hover:scale-[1.03] group-hover:opacity-80"
       />
@@ -431,7 +428,7 @@ function EditorialRow({ movie }: { movie: Movie }) {
       {/* Poster */}
       <div className="relative">
         <img
-          src={"http://localhost:9005/" + movie.poster}
+          src={getBackendUrl(movie.poster) ?? ""}
           alt={movie.title}
           className="h-24 w-16 rounded-xl object-cover"
         />
@@ -543,7 +540,7 @@ function GridMovie({ movie }: { movie: Movie }) {
     <NavLink to="id" className="group min-w-0">
       <div className="relative aspect-[2/3] overflow-hidden rounded-[18px] border border-white/[0.06] bg-[#131416]">
         <img
-          src={movie.poster || ""}
+          src={getBackendUrl(movie.poster) ?? ""}
           alt={movie.title}
           className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]"
         />

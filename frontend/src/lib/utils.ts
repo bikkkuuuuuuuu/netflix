@@ -1,15 +1,17 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { DateTime } from "luxon"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { DateTime } from "luxon";
+import { Movie } from "@/types/data";
+
+const BACKEND_URL = "http://192.168.254.16:9005";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-
+  return twMerge(clsx(inputs));
 }
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
 
 export function formatNumber(num: number): string {
-  return (num / 100).toLocaleString('en-IN', {
+  return (num / 100).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -17,7 +19,7 @@ export function formatNumber(num: number): string {
 
 export function setCookie(cname: string, cvalue: string, exdays: number) {
   const d = new Date();
-  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
   let expires = "expires=" + d.toUTCString();
   //name=value;expires=value;path=value;
   document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
@@ -25,10 +27,10 @@ export function setCookie(cname: string, cvalue: string, exdays: number) {
 
 export function getCookie(cname: string) {
   let name = cname + "=";
-  let ca = document.cookie.split(';');
+  let ca = document.cookie.split(";");
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
-    while (c.charAt(0) == ' ') {
+    while (c.charAt(0) == " ") {
       c = c.substring(1);
     }
     if (c.indexOf(name) == 0) {
@@ -37,15 +39,13 @@ export function getCookie(cname: string) {
   }
   return "";
 }
-export function formatDateTOYMD(date: string, format = 'yyyy-MM-dd') {
-  if (format === 'yyyy-MM-dd') {
-    return DateTime.fromJSDate(new Date(date)).toFormat('yyyy-MM-dd')
-  } else if (format === 'dd/MM/yyyy') {
-    return DateTime.fromJSDate(new Date(date)).toFormat('dd/MM/yyyy')
+export function formatDateTOYMD(date: string, format = "yyyy-MM-dd") {
+  if (format === "yyyy-MM-dd") {
+    return DateTime.fromJSDate(new Date(date)).toFormat("yyyy-MM-dd");
+  } else if (format === "dd/MM/yyyy") {
+    return DateTime.fromJSDate(new Date(date)).toFormat("dd/MM/yyyy");
   }
-
 }
-
 
 export const checkIsLiked = (likeList: string[], userId: string) => {
   return likeList.includes(userId);
@@ -67,7 +67,6 @@ export function formatDateString(dateString: string) {
 
   return `${formattedDate} at ${time}`;
 }
-
 
 export const multiFormatDateString = (timestamp: string = ""): string => {
   const timestampNum = Math.round(new Date(timestamp).getTime() / 1000);
@@ -95,3 +94,25 @@ export const multiFormatDateString = (timestamp: string = ""): string => {
       return "Just now";
   }
 };
+
+export const getBackendUrl = (path: string) => {
+  if (!path || path === "undefined") return null;
+  if (path.startsWith("http")) return path;
+  const cleanPath = path.replace(/^undefined\//, "");
+  return `${BACKEND_URL.replace(/\/$/, "")}/${cleanPath.replace(/^\//, "")}`;
+};
+
+export const normalizeMovie = (movie: Movie): Movie => ({
+  ...movie,
+  poster: getBackendUrl(movie?.poster as string) ?? "",
+  backdrop: getBackendUrl(movie?.backdrop as string),
+  logo: getBackendUrl(movie?.logo as string),
+  video: {
+    ...movie.video,
+    hlsUrl: getBackendUrl(movie?.video?.hlsUrl as string),
+    dashUrl: getBackendUrl(movie?.video?.dashUrl as string),
+  },
+});
+
+export const normalizeMovies = (movies: Movie[]): Movie[] =>
+  movies.map(normalizeMovie);

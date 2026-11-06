@@ -121,26 +121,99 @@ class MovieController {
   };
   getForHome = async (req, res, next) => {
     try {
+      const {
+        category,
+        type,
+        sort = "newest",
+        year,
+        from,
+        to,
+        limit = 10,
+        exclude,
+      } = req.query;
+      console.log(req.query);
       let filter = {
-        $and: [
-          { status: "active" },
-          { startDate: { $lte: new Date() } },
-          { endDate: { $gte: new Date() } },
-        ],
+        $and: [{ "processing.status": "ready" }],
       };
+
+      if (category) {
+        filter.genres = {
+          $in: Array.isArray(category) ? category : category.split(","),
+        };
+      }
+      if (type) {
+        filter.type = type;
+      }
+      if (year) {
+        filter.releaseYear = Number(year);
+      }
+      if (from || to) {
+        filter.createdAt = {};
+
+        if (from) {
+          filter.createdAt.$gte = new Date(from);
+        }
+
+        if (to) {
+          filter.createdAt.$lte = new Date(to);
+        }
+      }
+      if (exclude) {
+        filter._id = {
+          $nin: exclude.split(","),
+        };
+      }
+      const sortOptions = {
+        newest: { createdAt: -1 },
+        oldest: { createdAt: 1 },
+        recentlyUpdated: { updatedAt: -1 },
+        releaseDate: { releaseDate: -1 },
+        alphabetical: { title: 1 },
+      };
+      const sortBy = sortOptions[sort] || sortOptions.newest;
+      const safeLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
       const listMovie = await movieSvc.listAllMovie({
         skip: 0,
-        limit: 10,
-        filter: filter,
+        limit: safeLimit,
+        filter,
+        sort: sortBy,
       });
       res.json({
         detail: listMovie,
         message: "Movie list successfully",
-        status: "BANNER_LIST_SUCCESS",
-        options: null,
+        status: "MOVIE_LIST_SUCCESS",
+        options: {
+          limit: safeLimit,
+          sort,
+          filters: {
+            category,
+            type,
+            year,
+            from,
+            to,
+          },
+        },
       });
     } catch (exception) {
       console.log("Movie getForHome controller exception ", exception);
+      next(exception);
+    }
+  };
+
+  suggested = async (req, res, next) => {
+    try {
+      console.log(req.authUser);
+      const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
+      const data = await movieSvc.getSuggestedMovies(req.authUser._id, limit);
+
+      res.json({
+        detail: data,
+        message: "Suggested movies fetched successfully",
+        status: "SUGGESTED_MOVIES_SUCCESS",
+        options: null,
+      });
+    } catch (exception) {
+      console.log("Movie suggested controller exception:", exception);
       next(exception);
     }
   };

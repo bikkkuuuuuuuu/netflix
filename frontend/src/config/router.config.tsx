@@ -27,6 +27,8 @@ import Admin from "@/pages/admin/admin";
 import AdminStorage from "@/pages/admin/storage";
 import AdminUsers from "@/pages/admin/users";
 import AdminUserDetail from "@/pages/admin/userdetail";
+import SeriesUpload from "@/pages/admin/series";
+import CastProfilePage from "@/pages/cast/profile";
 
 const Routing: FC = () => {
   const router = createBrowserRouter([
@@ -40,7 +42,7 @@ const Routing: FC = () => {
           children: [
             { path: "/", element: <HomePage />, index: true },
             {
-              path: "detail",
+              path: "detail/:id",
               element: <DetailPage />,
             },
             {
@@ -50,6 +52,14 @@ const Routing: FC = () => {
             {
               path: "/admin",
               element: <Admin />,
+            },
+            {
+              path: "series",
+              element: <SeriesUpload />,
+            },
+            {
+              path: "cast",
+              element: <CastProfilePage />,
             },
 
             {

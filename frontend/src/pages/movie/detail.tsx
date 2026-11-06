@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Play,
-  Pause,
   Plus,
   Check,
   ThumbsUp,
@@ -9,20 +8,15 @@ import {
   Star,
   Flame,
   ChevronRight,
-  Info,
   Volume2,
   VolumeX,
-  X,
-  Maximize,
-  RotateCcw,
-  RotateCw,
-  ArrowLeft,
-  Award,
   ChevronDown,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import MovieSlider, { Movie } from "@/components/Cards/cards";
+import MovieSlider from "@/components/Cards/cards";
 import { MOVIES, SuggestedMovies } from "@/data/movies";
+import { Movie } from "@/types/data";
+import watchSvc from "@/services/watchlist.service";
 interface Episode {
   id: number;
   season: number;
@@ -174,38 +168,38 @@ const EPISODES_DATA: Episode[] = [
 const CAST_DATA: CastMember[] = [
   {
     id: 1,
-    name: "Millie Bobby Brown",
-    role: "Eleven",
+    name: "Ryan Gosling",
+    role: "Noah Calhoun",
     image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQaQ-IsT301HbvSUr2mIJuLkDnLYEJjWGC7nUqLUdJvqSiRbxlUA5z4wzFjIM3-N_-zgZN7pRjyoASC6NnukA-Yk8i0srvp2kBd7nrwkA&s=10",
   },
   {
     id: 2,
-    name: "Finn Wolfhard",
-    role: "Mike Wheeler",
+    name: "Rachel McAdams",
+    role: "Allie Hamilton",
     image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlXepB10RR2pFnrzF1G9MXvtpkP3arouC7XvPWUd0FlBI5nzBYw97gWE3C3-SVF_f5vYMsTt_diIwC-Aqg5Mze2xkvubHfHXJAkQBb8A&s=10",
   },
   {
     id: 3,
-    name: "Winona Ryder",
-    role: "Joyce Byers",
+    name: "James Marsden",
+    role: "Lon Hammond",
     image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-o9Nsa63VPWxVz5fVFEalm0LkPp-KaxHA6xOobIgTLW4CFaX02R-sF5dHvwug7M979puTO1H17FQxt-RCxSenRklNmV9bERnLFa8ak78&s=10",
   },
   {
     id: 4,
-    name: "David Harbour",
-    role: "Jim Hopper",
+    name: "Joan Allen",
+    role: "Anne Hamilton",
     image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO7GQg9Ea53GpaWI-ssaqIg7KhLVFD6vC-JGU8bcRSEVdEqtjvnRqXH1WLYGbQf2U-c9oemmFUEZqCUiQyvD7Y720wmWNk_YqxcZ6VSgk&s=10",
   },
   {
     id: 3,
-    name: "Winona Ryder",
-    role: "Joyce Byers",
+    name: "Gena Rowlands",
+    role: "Allie Hamilton",
     image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTR-_ps2WUsD4QEhsckj_rn5PHRm0py7L0ihQ_479_zcOJ6KrA_EC64u8SVp0OFvHxy23GDfME5QKJEmZwN7kkyAjDctEVTKdkw305GVQ&s=10",
   },
   {
     id: 4,
@@ -235,10 +229,10 @@ export default function DetailPage() {
     useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [playerProgress, setPlayerProgress] = useState(25);
-  const [volume, setVolume] = useState(80);
-  const [showControls, setShowControls] = useState(true);
+
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  console.log(currentPlayingEpisode, playerProgress, isFullscreen);
   const navigate = useNavigate();
   // Toast Notification Trigger
   const triggerNotification = (msg: string) => {
@@ -298,6 +292,17 @@ export default function DetailPage() {
     enterFullscreen();
   }, [isVideoModalOpen]);
 
+  const addtoWatchList = async (id: string) => {
+    try {
+      const response = await watchSvc.addtoWatchList(id);
+      if (response.status === "ALREADY_SAVED") {
+        await watchSvc.removeFromSaved(id);
+      }
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+
   return (
     <>
       <div
@@ -309,7 +314,7 @@ export default function DetailPage() {
           <div className="lg:col-span-9 relative rounded-[30px] overflow-hidden bg-black min-h-[440px] lg:min-h-[480px] flex flex-col justify-between p-6 md:p-8 shadow-2xl group border border-white/10 select-none">
             {/* Poster Backdrop with Ambient Overlay */}
             <img
-              src={movie?.posterUrl}
+              src={movie?.backdrop || ""}
               alt={movie?.title}
               className="absolute inset-0 w-full h-full object-cover filter contrast-125 saturate-110 brightness-75 group-hover:scale-105 transition-transform duration-1000"
             />
@@ -389,22 +394,18 @@ export default function DetailPage() {
               <div className="flex items-center gap-3 pt-2 flex-wrap">
                 <button
                   onClick={() => {
-                    navigate("/watch/" + movie?.id);
+                    navigate("/watch/" + movie?._id, { state: movie });
                   }}
                   className="flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-black hover:bg-neutral-200 text-sm font-bold transition-all transform hover:scale-105 active:scale-95 shadow-xl"
                 >
                   <Play className="w-4 h-4 fill-black text-black" />
-                  <span>Play S{selectedSeason} E1</span>
+                  <span>Play Now</span>
                 </button>
 
                 <button
                   onClick={() => {
                     setInWatchlist(!inWatchlist);
-                    triggerNotification(
-                      !inWatchlist
-                        ? "Added Stranger Things to Watchlist"
-                        : "Removed from Watchlist",
-                    );
+                    addtoWatchList(movie?._id as string);
                   }}
                   className={`flex items-center gap-2 px-5 py-3.5 rounded-full border backdrop-blur-xl text-xs font-semibold transition-all transform hover:scale-105 active:scale-95 shadow-lg ${
                     inWatchlist
@@ -472,16 +473,14 @@ export default function DetailPage() {
               {CAST_DATA.slice(0, 5).map((actor) => (
                 <button
                   key={actor.id}
-                  onClick={() =>
-                    triggerNotification(`Actor profile: ${actor.name}`)
-                  }
-                  className="group text-left"
+                  onClick={() => navigate("/cast")}
+                  className="group text-center"
                 >
-                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#1b1c20] mb-3">
+                  <div className="relative rounded-full aspect-square  overflow-hidden bg-[#1b1c20] mb-3">
                     <img
                       src={actor.image}
                       alt={actor.name}
-                      className="w-full h-full object-cover grayscale-[15%] group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover  grayscale-[15%] group-hover:scale-105 transition-transform duration-500"
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

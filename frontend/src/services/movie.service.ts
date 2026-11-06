@@ -23,6 +23,19 @@ class MovieService extends HttpService {
       throw exception;
     }
   };
+  home = async (limit = 20, search: string) => {
+    try {
+      const response = await this.getRequest("/movies/home", {
+        params: {
+          limit: limit,
+          search: search,
+        },
+      });
+      return response.data;
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
   list = async (limit = 20, search: string) => {
     try {
       const response = await this.getRequest("/movies/list", {
@@ -37,27 +50,23 @@ class MovieService extends HttpService {
       console.log(exception);
     }
   };
-  suggested = async (limit = 20, search: string) => {
+  suggested = async () => {
     try {
-      const response = await this.getRequest("/movies/suggestions", {
+      const response = await this.getRequest("/movies/suggested", {
         auth: true,
-        params: {
-          limit: limit,
-          search: search,
-        },
       });
       return response.data;
     } catch (exception) {
       console.log(exception);
     }
   };
-  newlyArrived = async (limit = 20, search: string) => {
+  newlyArrived = async (limit = 10) => {
     try {
-      const response = await this.getRequest("/movies/new", {
+      const response = await this.getRequest("/movies/home", {
         auth: true,
         params: {
           limit: limit,
-          search: search,
+          sort: "newest",
         },
       });
       return response.data;

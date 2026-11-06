@@ -124,6 +124,42 @@ class AuthController {
       next(exception);
     }
   };
+  getRefreshToken = async (req, res, next) => {
+    try {
+      const user = req.authUser;
+      const accessToken = jwt.sign(
+        {
+          sub: user._id,
+          typ: "bearer",
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        },
+      );
+      const refreshToken = jwt.sign(
+        {
+          sub: user._id,
+          typ: "refresh",
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "10d",
+        },
+      );
+      res.json({
+        detail: {
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        },
+        message: "Token Refreshed",
+        status: "TOKEN_REFRESHED",
+        options: null,
+      });
+    } catch (exception) {
+      next("getRefreshToken :", exception);
+    }
+  };
   getLoggedInUser = async (req, res, next) => {
     try {
       res.json({

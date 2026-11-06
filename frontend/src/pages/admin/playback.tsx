@@ -12,10 +12,8 @@ import {
   Gauge,
   Globe2,
   HardDrive,
-  Radio,
   Server,
   Signal,
-  Tv,
   Video,
 } from "lucide-react";
 

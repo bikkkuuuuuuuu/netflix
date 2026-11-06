@@ -18,18 +18,18 @@ type RecentlyWatched = {
 const trendingAnime: TrendingAnime[] = [
   {
     id: 1,
-    title: "One Piece",
-    subtitle: "Attack of the Fanboy",
+    title: "Daredevil: Born Again",
+    subtitle: "Attack of the Devils",
     image:
-      "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=900&q=85",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWNHlvJiay4ZLZnCBpy47KeG9b7dnY19EsVYGESkNwV12w9mUV7ILZCEt1&s=10",
   },
 
   {
     id: 3,
-    title: "My Neighbor Totoro",
+    title: "Spiderman: Homecoming",
     subtitle: "Studio Ghibli",
     image:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=900&q=85",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXlxyHR3mPXOEmjT5wD9CplpGjjO_G9sKqezV85h1P27qEjMXnm9ZE_xa4&s=10",
   },
 ];
 
@@ -95,12 +95,12 @@ export default function RightSidebar() {
   return (
     <div
       className="
-      mt-3
+      mt-2
           rounded-[24px]
           bg-[#121316]
           px-4
-          py-6
-          h-[95%]
+          py-4
+          h-[95svh]
         "
     >
       {/* =========================

@@ -1,10 +1,7 @@
 import React from "react";
 import {
-  Activity,
   ArrowUpRight,
-  CheckCircle2,
   Clock3,
-  Database,
   Film,
   HardDrive,
   Play,

@@ -23,7 +23,7 @@ const app = express();
 // };
 // startRabbitMq();
 
-const publicDir = path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
+// const publicDir = path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
 app.use(requestLogger);
 
 connectRedis();
@@ -45,53 +45,109 @@ app.use(
     refillInterval: 1000,
   }),
 );
+
+const publicDir = path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
+const moviesDir = path.join(publicDir, "movies");
+const uploadsDir = path.join(publicDir, "uploads");
+const frontendDir = path.join(publicDir, "app");
+
 app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "ok",
   });
 });
 
+// app.use("/movies/:id/images", (req, res, next) => {
+//   const movieDir = path.join(publicDir, "movies", req.params.id, "images");
+
+//   express.static(movieDir, {
+//     index: false,
+//     dotfiles: "deny",
+//   })(req, res, next);
+// });
+
+// app.use("/movies/:id/hls", (req, res, next) => {
+//   const movieDir = path.join(publicDir, "movies", req.params.id, "hls");
+
+//   express.static(movieDir, {
+//     index: false,
+//     dotfiles: "deny",
+//   })(req, res, next);
+// });
+
+// Serve movie images
+app.use(
+  "/movies",
+  express.static(moviesDir, {
+    index: false,
+    dotfiles: "deny",
+    fallthrough: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".m3u8")) {
+        res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
+      }
+      if (filePath.endsWith(".ts")) {
+        res.setHeader("Content-Type", "video/mp2t");
+      }
+    },
+  }),
+);
+// app.get("*name", (_req, res) => {
+//   res.sendFile(path.join(publicDir, "index.html"));
+// });
+
 app.use("/api/v1", apiRouter);
 
-app.use("/movies/:id/images", (req, res, next) => {
-  const movieDir = path.join(publicDir, "movies", req.params.id, "images");
-
-  express.static(movieDir, {
-    index: false,
-    dotfiles: "deny",
-  })(req, res, next);
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    data: {},
+    message: `API route not found: ${req.originalUrl}`,
+    status: "NOT_FOUND",
+    options: null,
+  });
 });
 
-app.use("/movies/:id/hls", (req, res, next) => {
-  const movieDir = path.join(publicDir, "movies", req.params.id, "hls");
-
-  express.static(movieDir, {
+app.use(
+  express.static(frontendDir, {
     index: false,
     dotfiles: "deny",
-  })(req, res, next);
+  }),
+);
+
+// React Router SPA fallback
+app.get("/{*splat}", (req, res, next) => {
+  res.sendFile(path.join(frontendDir, "index.html"), (error) => {
+    if (error) next(error);
+  });
 });
-app.get("*name", (_req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
+
+app.use((req, res) => {
+  res.status(404).json({
+    data: {},
+    message: `Resource not found: ${req.originalUrl}`,
+    status: "NOT_FOUND",
+    options: null,
+  });
 });
 
 app.use((error, req, res, next) => {
-  let code = +error.code || 500;
+  let code = Number(error.status || error.statusCode || error.code) || 500;
   const detail = error.detail || {};
-  let message = error.message || "Internal Sever Error";
+
+  let message = error.message || "Internal Server Error";
   let status = error.status || "INTERNAL_SERVER_ERROR";
 
-  //uniqueness validation failed
-  if (+error.code === 11000) {
+  if (Number(error.code) === 11000) {
     code = 400;
-    //{keyPattern:{email:1,name:1}}=>['email','name']
-    Object.keys(error.keyPattern).map((key) => {
+
+    Object.keys(error.keyPattern || {}).forEach((key) => {
       detail[key] = `${key} should be unique`;
     });
+
     status = "VALIDATION_FAILED";
     message = "Validation Failed";
   }
 
-  console.log(error);
   logger.error("Request failed", {
     method: req.method,
     path: req.originalUrl,
@@ -100,10 +156,11 @@ app.use((error, req, res, next) => {
     error: message,
     stack: error.stack,
   });
+
   res.status(code).json({
     data: detail,
-    message: message,
-    status: status,
+    message,
+    status,
     options: null,
   });
 });

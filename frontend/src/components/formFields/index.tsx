@@ -1,14 +1,6 @@
 import { useController } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
-import {
-  CheckCircle2,
-  FileVideo,
-  Film,
-  HardDrive,
-  ImagePlus,
-  Upload,
-  X,
-} from "lucide-react";
+import { FileVideo, ImagePlus, Upload, X } from "lucide-react";
 
 interface LabelProps {
   htmlFor: string;

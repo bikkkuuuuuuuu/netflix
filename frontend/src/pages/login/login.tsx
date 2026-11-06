@@ -104,12 +104,12 @@ const LogInPage = () => {
     console.log("OTP Resent to:", email);
     alert("OTP resent successfully!");
   };
-  const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:9005/api/v1/auth/google";
-  };
-  const handleFacebookLogin = () => {
-    window.location.href = "http://localhost:9005/api/v1/auth/facebook";
-  };
+  // const handleGoogleLogin = () => {
+  //   window.location.href = "http://localhost:9005/api/v1/auth/google";
+  // };
+  // const handleFacebookLogin = () => {
+  //   window.location.href = "http://localhost:9005/api/v1/auth/facebook";
+  // };
 
   return (
     <section className="min-h-screen bg-[#121316] flex flex-wrap">

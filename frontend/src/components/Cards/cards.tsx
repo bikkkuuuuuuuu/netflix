@@ -1,38 +1,27 @@
-import React from "react";
+import { memo, useCallback } from "react";
 import { Play, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-export interface Movie {
-  id: string;
-  title: string;
-  genre: string;
-  description: string;
-  posterUrl: string;
-  rating: string;
-  year: string;
-  duration: string;
-}
+import { Movie } from "@/types/data";
 
 interface MovieCardProps {
   movie: Movie;
   onSelect: (movie: Movie) => void;
 }
 
-const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect }) => {
+const MovieCard = memo(function MovieCard({ movie, onSelect }: MovieCardProps) {
   return (
     <div
       onClick={() => onSelect(movie)}
       className="group relative cursor-pointer overflow-hidden rounded-[28px] bg-neutral-900 transition-all duration-500  hover:shadow-purple-500/10 focus:outline-none focus:ring-2 focus:ring-white/20 aspect-[3/4] flex flex-col justify-end p-5 sm:p-6 select-none"
     >
-      {/* Poster Image Background */}
       <img
-        src={movie.posterUrl}
+        src={movie.poster || ""}
         alt={movie.title}
-        className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
         loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.03]"
       />
 
-      {/* Dark Multi-layer Gradient Overlay for perfect readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-95" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
 
@@ -56,7 +45,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect }) => {
               e.stopPropagation();
               onSelect(movie);
             }}
-            className="shrink-0 h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-white/25 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:bg-white hover:text-black hover:scale-110 active:scale-95 group/btn"
+            className="group/btn flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/25 text-white shadow-lg transition-colors duration-200 hover:bg-white hover:text-black active:scale-95 sm:h-12 sm:w-12"
           >
             <Play className="h-5 w-5 fill-current ml-0.5 transition-transform duration-300 group-hover/btn:scale-110" />
           </button>
@@ -64,20 +53,26 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onSelect }) => {
       </div>
     </div>
   );
-};
+});
 
 export default function MovieSlider({
   title,
   mapItems,
   MOVIES,
 }: {
-  title?: String;
+  title?: string;
   mapItems?: number;
   MOVIES: Movie[];
 }) {
   const navigate = useNavigate();
+  const handleSelect = useCallback(
+    (movie: Movie) => {
+      navigate("/detail/" + movie._id, { state: { movie } });
+    },
+    [navigate],
+  );
   return (
-    <div className="text-white p-2  antialiased selection:bg-white selection:text-black ">
+    <div className="[content-visibility:auto] [contain-intrinsic-size:auto_650px] text-white p-2 antialiased selection:bg-white selection:text-black">
       {/* Component Container */}
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
@@ -97,16 +92,14 @@ export default function MovieSlider({
         {/* Cards Responsive Grid Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {MOVIES.slice(0, mapItems ?? MOVIES.length).map((movie) => (
-            <MovieCard
-              key={movie.id}
-              movie={movie}
-              onSelect={(movie) => {
-                navigate("/detail", { state: { movie } });
-              }}
-            />
+            <MovieCard key={movie._id} movie={movie} onSelect={handleSelect} />
           ))}
         </div>
       </div>
     </div>
   );
 }
+
+// (movie) => {
+//   navigate("/detail", { state: { movie } });
+// }

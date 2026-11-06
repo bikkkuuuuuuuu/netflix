@@ -66,8 +66,8 @@ function runFFmpeg(input, outputDirectory, profile) {
       input,
       "-map",
       "0:v:0",
-      "-map",
-      "0:a:0?",
+
+      "-an",
       "-vf",
       `scale=w=${profile.width}:h=${profile.height}:force_original_aspect_ratio=decrease,pad=${profile.width}:${profile.height}:(ow-iw)/2:(oh-ih)/2`,
       "-c:v",
@@ -80,12 +80,9 @@ function runFFmpeg(input, outputDirectory, profile) {
       profile.videoBitrate,
       "-bufsize",
       "2M",
-      "-c:a",
-      "aac",
-      "-b:a",
-      profile.audioBitrate,
-      "-ac",
-      "2",
+
+      "-an",
+
       "-f",
       "hls",
       "-hls_time",
@@ -154,44 +151,6 @@ async function transcodeProfile(movieId, profileName) {
     profile: profileName,
     playlist: `/movies/${movieId}/hls/${profileName}/index.m3u8`,
   };
-  // movie.processing.status = "processing";
-  // movie.processing.progress = 0;
-  // await movie.save();
-  // try {
-  //   for (let i = 0; i < profiles.length; i++) {
-  //     const profile = profiles[i];
-
-  //     const profileDirectory = path.join(outputDirectory, profile.name);
-
-  //     await fs.mkdir(profileDirectory, {
-  //       recursive: true,
-  //     });
-
-  //     await runFFmpeg(sourcePath, outputDirectory, profile);
-
-  //     movie.processing.progress = Math.round(((i + 1) / profiles.length) * 90);
-
-  //     await movie.save();
-  //   }
-
-  //   await createMasterPlaylist(outputDirectory);
-
-  //   movie.video.hlsUrl = `/media/movies/${movieId}/master.m3u8`;
-
-  //   movie.processing.progress = 100;
-
-  //   movie.processing.status = "ready";
-
-  //   await movie.save();
-  // } catch (error) {
-  //   movie.processing.status = "failed";
-
-  //   movie.processing.error = error.message;
-
-  //   await movie.save();
-
-  //   throw error;
-  // }
 }
 
 async function generateSubtitles(movieId) {
@@ -231,6 +190,111 @@ async function generateSubtitles(movieId) {
   return generated;
 }
 
+async function generateAudioTracks(movieId) {
+  const movie = await MovieModel.findById(movieId);
+
+  if (!movie) {
+    throw new Error(`Movie ${movieId} not found`);
+  }
+
+  const sourcePath = getSourcePath(movie);
+
+  try {
+    await fs.access(sourcePath);
+  } catch {
+    throw new Error(`Source video does not exist: ${sourcePath}`);
+  }
+
+  const audioDirectory = path.join(getHlsDirectory(movieId), "audio");
+
+  console.log(`[Audio] Probing ${movieId}`);
+
+  const streams = await probeAudioStreams(sourcePath);
+
+  if (!streams.length) {
+    console.log(`[Audio] No audio streams found for ${movieId}`);
+
+    // Do not create an empty audio manifest.
+    // The finalizer can handle movies without audio separately.
+    return [];
+  }
+
+  // Remove previous output so retries don't leave stale segments.
+  await fs.rm(audioDirectory, {
+    recursive: true,
+    force: true,
+  });
+
+  await fs.mkdir(audioDirectory, {
+    recursive: true,
+  });
+
+  const tracks = [];
+
+  // Prefer the source's default audio stream.
+  const defaultStreamIndex = streams.findIndex(
+    (stream) => stream.disposition?.default === 1,
+  );
+
+  for (let i = 0; i < streams.length; i++) {
+    const stream = streams[i];
+
+    const trackId = `track-${i}`;
+
+    const language = stream.tags?.language?.toLowerCase() || "und";
+
+    const name =
+      stream.tags?.title ||
+      (language !== "und" ? language.toUpperCase() : `Audio ${i + 1}`);
+
+    const isDefault =
+      defaultStreamIndex >= 0 ? i === defaultStreamIndex : i === 0;
+
+    const trackDirectory = path.join(audioDirectory, trackId);
+
+    await fs.mkdir(trackDirectory, {
+      recursive: true,
+    });
+
+    const playlistPath = path.join(trackDirectory, "index.m3u8");
+
+    const segmentPattern = path.join(trackDirectory, "segment_%05d.ts");
+
+    console.log(`[Audio] Processing ${name} | Stream ${stream.index}`);
+
+    await transcodeAudioStream(
+      sourcePath,
+      playlistPath,
+      segmentPattern,
+      stream,
+    );
+
+    tracks.push({
+      id: trackId,
+      index: i,
+      streamIndex: stream.index,
+      name,
+      language,
+      default: isDefault,
+      codec: "aac",
+      bitrate: 128000,
+      channels: 2,
+      sourceChannels: stream.channels || null,
+      sourceCodec: stream.codec_name || null,
+      playlist: `audio/${trackId}/index.m3u8`,
+    });
+  }
+
+  const manifestPath = path.join(audioDirectory, "tracks.json");
+
+  await fs.writeFile(manifestPath, JSON.stringify(tracks, null, 2), "utf8");
+
+  console.log(
+    `[Audio] Successfully generated ${tracks.length} tracks for ${movieId}`,
+  );
+
+  return tracks;
+}
 function probeSubtitleStreams(input) {
   return new Promise((resolve, reject) => {
     const args = [
@@ -320,8 +384,116 @@ function extractSubtitle(input, streamIndex, output) {
     });
   });
 }
+
+function probeAudioStreams(input) {
+  return new Promise((resolve, reject) => {
+    const ffprobe = spawn(
+      process.env.FFPROBE_PATH || "ffprobe",
+      [
+        "-v",
+        "error",
+        "-select_streams",
+        "a",
+        "-show_entries",
+        "stream=index,codec_name,channels,channel_layout:stream_tags=language,title:stream_disposition=default",
+        "-of",
+        "json",
+        input,
+      ],
+      { windowsHide: true },
+    );
+
+    let stdout = "";
+    let stderr = "";
+
+    ffprobe.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+
+    ffprobe.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    ffprobe.on("error", reject);
+
+    ffprobe.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`Audio ffprobe failed: ${stderr}`));
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(stdout).streams || []);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+function transcodeAudioStream(input, output, segmentPattern, stream) {
+  return new Promise((resolve, reject) => {
+    const args = [
+      "-y",
+      "-i",
+      input,
+      "-map",
+      `0:${stream.index}`,
+      "-vn",
+      "-sn",
+      "-dn",
+      "-c:a",
+      "aac",
+      "-profile:a",
+      "aac_low",
+      "-b:a",
+      "128k",
+      "-ac",
+      "2",
+      "-ar",
+      "48000",
+      "-f",
+      "hls",
+      "-hls_time",
+      "6",
+      "-hls_playlist_type",
+      "vod",
+      "-hls_flags",
+      "independent_segments",
+      "-hls_segment_filename",
+      segmentPattern,
+      output,
+    ];
+
+    const ffmpeg = spawn(process.env.FFMPEG_PATH || "ffmpeg", args, {
+      windowsHide: true,
+    });
+
+    let stderr = "";
+
+    ffmpeg.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    ffmpeg.on("error", reject);
+
+    ffmpeg.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(
+          new Error(
+            `Audio FFmpeg failed for stream ${stream.index}: ${stderr.slice(-3000)}`,
+          ),
+        );
+      }
+    });
+  });
+}
+
 module.exports = {
   profiles,
   transcodeProfile,
   generateSubtitles,
+  generateAudioTracks,
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Plus,
   Check,
@@ -12,58 +12,13 @@ import {
   Share2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import MovieSlider, { Movie } from "@/components/Cards/cards";
-
-const MOVIES: Movie[] = [
-  {
-    id: "ladybug",
-    title: "Ladybug & Cat Noir: Awakening",
-    genre: "Adventure",
-    description:
-      "Ordinary teenager Marinette's life in Paris goes superhuman when she becomes Ladybug, joining forces with Cat Noir to save the city from a villain.",
-    posterUrl:
-      "https://m.media-amazon.com/images/I/61Dbbnf52DL._AC_UF894,1000_QL80_.jpg",
-    rating: "PG",
-    year: "2023",
-    duration: "1h 45m",
-  },
-  {
-    id: "mario",
-    title: "The Super Mario Bros. Movie",
-    genre: "Action",
-    description:
-      "A plumber named Mario travels through an underground labyrinth with his brother, Luigi, trying to save a captured princess from Bowser.",
-    posterUrl:
-      "https://m.media-amazon.com/images/M/MV5BOWFmNmY2YjAtZTgyNy00MjBmLWI1YWMtMjFjZjkxYjYyOTVmXkEyXkFqcGc@._V1_.jpg",
-    rating: "PG",
-    year: "2023",
-    duration: "1h 32m",
-  },
-  {
-    id: "spiderman",
-    title: "Spider-Man: Across the Spider-Verse",
-    genre: "Adventure",
-    description:
-      "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.",
-    posterUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7xoOS6YiMcxPk1wgwnF3WvkAUxsQXVpJ3EaGwlJOe75uNdY1njVgi5t8&s=10",
-    rating: "PG-13",
-    year: "2023",
-    duration: "2h 20m",
-  },
-  {
-    id: "elemental",
-    title: "Elemental",
-    genre: "Comedy",
-    description:
-      "Follows Ember and Wade, in a city where fire-, water-, land- and air-residents live together and discover how much they actually have in common.",
-    posterUrl:
-      "https://artofthemovies.co.uk/cdn/shop/products/IMG_0735_incinemas-219707.jpg?v=1674596999&width=900",
-    rating: "PG",
-    year: "2023",
-    duration: "1h 41m",
-  },
-];
+import MovieSlider from "@/components/Cards/cards";
+import { Movie, WatchHistory } from "@/types/data";
+import { AuthContext } from "@/context/auth-context";
+import { UserType } from "@/services/auth.service";
+import { formatDateString, normalizeMovie } from "@/lib/utils";
+import watchSvc from "@/services/watchlist.service";
+import watchHistorySvc from "@/services/watchHistory.service";
 
 const StatCard = ({
   icon,
@@ -91,12 +46,58 @@ const StatCard = ({
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { loggedInUser } = useContext(AuthContext) as {
+    loggedInUser: UserType | null;
+    isLoading: boolean;
+  };
 
   const [activeTab, setActiveTab] = useState<
     "overview" | "watchlist" | "activity"
   >("overview");
 
+  const [recentlyWatched, setRecentlyWatched] = useState<WatchHistory[]>([]);
+  const [watchList, setWatchList] = useState<Movie[]>([]);
+
   const [isFollowing, setIsFollowing] = useState(false);
+
+  const fetchRecentlyWatched = async () => {
+    try {
+      const response = await watchHistorySvc.fetchRecentWatches();
+
+      setRecentlyWatched(response.detail);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  const fetchWatchList = async () => {
+    try {
+      const response = await watchSvc.listMyWatchList();
+      const normalizedMovies: Movie[] = response.detail
+        .filter((item: any) => item?.movie?._id)
+        .map((item: any) => normalizeMovie(item.movie));
+      setWatchList(normalizedMovies);
+      console.log(watchList);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+
+  useEffect(() => {
+    fetchWatchList();
+    fetchRecentlyWatched();
+  }, []);
+
+  const recentlyWatchedMovies: Movie[] = Array.from(
+    new Map(
+      recentlyWatched
+        .filter((history) => history?.movie?._id)
+        .map((history) => {
+          const movie = normalizeMovie(history.movie);
+
+          return [movie._id, movie];
+        }),
+    ).values(),
+  );
 
   return (
     <div className="min-h-full flex flex-col flex-1 text-white p-3">
@@ -130,31 +131,23 @@ export default function ProfilePage() {
 
               {/* Profile info */}
               <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="px-2.5 py-1 rounded-full bg-white/[0.07] border border-white/10 text-[9px] uppercase tracking-[0.15em] font-bold text-neutral-400">
-                    Movie Enthusiast
-                  </span>
-
-                  <span className="px-2.5 py-1 rounded-full bg-white text-black text-[9px] uppercase tracking-[0.15em] font-black">
-                    Free
-                  </span>
-                </div>
-
                 <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-                  Bikash Pandey
+                  {loggedInUser?.name}
                 </h1>
 
-                <p className="text-sm text-neutral-500 mt-1">@bikashpandey</p>
-
-                <p className="text-xs text-neutral-400 max-w-xl mt-4 leading-relaxed">
-                  Exploring stories, strange worlds and everything in between.
-                  Mostly watching sci-fi, thrillers and mysteries.
+                <p className="text-sm text-neutral-500 mt-1">
+                  {loggedInUser?.username}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-4 mt-5 text-[10px] text-neutral-500">
+                <div className="flex flex-wrap items-center gap-4 mt-5 text-[14px] text-neutral-500">
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="h-3.5 w-3.5" />
-                    Joined September 2026
+                    Joined{" "}
+                    {
+                      formatDateString(loggedInUser?.createdAt as string).split(
+                        "at",
+                      )[0]
+                    }
                   </span>
 
                   <span className="flex items-center gap-1.5">
@@ -273,17 +266,17 @@ export default function ProfilePage() {
             <MovieSlider
               title="Continue Watching"
               mapItems={3}
-              MOVIES={MOVIES}
+              MOVIES={recentlyWatchedMovies}
             />
 
             {/* WATCHLIST PREVIEW */}
-            <MovieSlider title="My watchlist" mapItems={3} MOVIES={MOVIES} />
+            <MovieSlider title="My watchlist" mapItems={3} MOVIES={watchList} />
           </>
         )}
 
         {/* WATCHLIST */}
         {activeTab === "watchlist" && (
-          <MovieSlider title="My watchlist" mapItems={3} MOVIES={MOVIES} />
+          <MovieSlider title="My watchlist" mapItems={3} MOVIES={watchList} />
         )}
 
         {/* FOOTER ACTIONS */}

@@ -104,7 +104,7 @@ export default function AdminUpload() {
     resolver: yupResolver(MovieDTO),
     defaultValues: {
       title: "",
-      year: "",
+      releaseYear: "",
       description: "",
       mediaType: "Movie",
       genre: "Sci-Fi",
@@ -112,7 +112,7 @@ export default function AdminUpload() {
       imdbRating: "",
       backdrop: null,
       poster: null,
-      video: null,
+      // video: null,
     },
   });
 
@@ -135,24 +135,6 @@ export default function AdminUpload() {
     setCastList((current) => current.filter((actor) => actor !== name));
   };
 
-  const simulateUpload = () => {
-    if (isUploading) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    const interval = window.setInterval(() => {
-      setUploadProgress((current) => {
-        if (current >= 100) {
-          window.clearInterval(interval);
-          setIsUploading(false);
-          return 100;
-        }
-
-        return Math.min(current + 10, 100);
-      });
-    }, 350);
-  };
   const submitForm = async (data: any) => {
     const formData = new FormData();
 

@@ -4,6 +4,8 @@ const storage = require("../../services/storage/storage.factory");
 const { queueMovieTranscoding } = require("../../queues/transcode.queue");
 const fs = require("node:fs/promises");
 const slugify = require("slugify");
+const WatchHistoryModel = require("../watchHistory/watchHistory.model");
+const { buildPreferences, calculateMatch } = require("../../utilities/helper");
 
 class MovieService {
   transformCreateRequest = async (req) => {
@@ -133,10 +135,15 @@ class MovieService {
       throw exception;
     }
   };
-  listAllMovie = async ({ skip = 0, limit = 10, filter = {} }) => {
+  listAllMovie = async ({
+    skip = 0,
+    limit = 10,
+    filter = {},
+    sort = { created: -1 },
+  }) => {
     try {
       let data = await MovieModel.find(filter)
-        .sort({ _id: 1 })
+        .sort(sort)
         .skip(skip)
         .limit(limit);
 
@@ -265,6 +272,124 @@ class MovieService {
     return ["true", "1", "yes", "on"].includes(
       String(value).trim().toLowerCase(),
     );
+  };
+
+  getSuggestedMovies = async (userId, limit = 20) => {
+    // 1. Get the user's recent viewing history.
+    const history = await WatchHistoryModel.find({
+      user: userId,
+    })
+      .sort({ lastWatchedAt: -1 })
+      .limit(40)
+      .populate({
+        path: "movie",
+        select: "genres cast directors releaseYear",
+      })
+      .lean();
+
+    // 2. Exclude movies already watched.
+    const watchedMovieIds = history
+      .map((item) => item.movie?._id?.toString())
+      .filter(Boolean);
+
+    // 3. Get candidate movies.
+    const candidates = await MovieModel.find({
+      published: true,
+
+      _id: { $nin: watchedMovieIds },
+    })
+      .sort({
+        trending: -1,
+        featured: -1,
+        createdAt: -1,
+      })
+      .limit(300)
+      .lean();
+
+    if (!candidates.length) return [];
+
+    // 4. No history? Return a useful discovery feed.
+    if (!history.length) {
+      return candidates.slice(0, limit).map((movie) => ({
+        ...movie,
+        recommendationScore: 0,
+        recommendationReason: movie.trending
+          ? "Trending now"
+          : movie.featured
+            ? "Featured movie"
+            : "Recently added",
+      }));
+    }
+
+    // 5. Build the user's preference profile.
+    const preferences = buildPreferences(history);
+
+    const recentMovies = history
+      .filter((item) => item.movie)
+      .slice(0, 5)
+      .map((item) => item.movie);
+
+    const preferredYear =
+      recentMovies.length > 0
+        ? recentMovies.reduce(
+            (sum, movie) => sum + (movie.releaseYear || 0),
+            0,
+          ) / recentMovies.length
+        : null;
+
+    // 6. Score each candidate.
+    const scoredMovies = candidates.map((movie) => {
+      const genreScore = calculateMatch(movie.genres, preferences.genres);
+
+      const castScore = calculateMatch(
+        movie.cast?.map((person) => person.name).filter(Boolean),
+        preferences.cast,
+      );
+
+      const directorScore = calculateMatch(
+        movie.directors,
+        preferences.directors,
+      );
+
+      const yearScore =
+        preferredYear && movie.releaseYear
+          ? Math.max(0, 100 - Math.abs(movie.releaseYear - preferredYear) * 5)
+          : 0;
+
+      const trendingScore = movie.trending ? 100 : 0;
+      const recencyScore = movie.featured ? 70 : 30;
+
+      const score =
+        genreScore * 0.4 +
+        castScore * 0.2 +
+        directorScore * 0.15 +
+        trendingScore * 0.1 +
+        recencyScore * 0.1 +
+        yearScore * 0.05;
+
+      let recommendationReason = "Picked for you";
+
+      if (genreScore >= 50) {
+        recommendationReason = `Because you enjoy ${movie.genres?.[0] || "similar"} movies`;
+      } else if (directorScore > 0) {
+        recommendationReason = "From a director you've watched";
+      } else if (castScore > 0) {
+        recommendationReason = "Featuring familiar cast members";
+      } else if (movie.trending) {
+        recommendationReason = "Trending now";
+      }
+
+      return {
+        ...movie,
+        recommendationScore: Math.round(score),
+        recommendationReason,
+      };
+    });
+
+    // 7. Highest match first.
+    return scoredMovies
+      .sort((a, b) => b.recommendationScore - a.recommendationScore)
+      .slice(0, limit);
   };
 }
 const movieSvc = new MovieService();

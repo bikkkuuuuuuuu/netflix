@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Play, Flame } from "lucide-react";
 
-export default function Banner() {
+export default function Banner(img: { img?: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
@@ -10,7 +10,7 @@ export default function Banner() {
         <div className="relative h-full overflow-hidden -ml-12 border-r border-red-500/20">
           <div className="absolute inset-0  transition-transform duration-700 ">
             <img
-              src="/images/stranger.png"
+              src={img.img ?? "/images/stranger.png"}
               alt="Steve Harrington"
               className="w-full h-full object-cover filter contrast-125 saturate-150 brightness-75"
             />
@@ -51,7 +51,7 @@ export default function Banner() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-sm font-medium transition-all transform hover:scale-105 active:scale-95 shadow-lg"
         >
           <Play className="w-4 h-4 fill-white" />
-          <span>{isPlaying ? "Pause" : "Watch now"}</span>
+          <span>{"Watch now"}</span>
         </button>
 
         <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">

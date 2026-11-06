@@ -1,6 +1,11 @@
 import Banner from "@/components/Banner/banner";
 import MovieSlider from "@/components/Cards/cards";
-import { MOVIES, SuggestedMovies } from "@/data/movies";
+import { SuggestedMovies } from "@/data/movies";
+import { getBackendUrl, normalizeMovie, normalizeMovies } from "@/lib/utils";
+import movieSvc from "@/services/movie.service";
+import watchHistorySvc from "@/services/watchHistory.service";
+import watchSvc from "@/services/watchlist.service";
+import { Movie } from "@/types/data";
 import {
   Play,
   Pause,
@@ -10,11 +15,15 @@ import {
   SkipForward,
   Maximize2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const [nowPlayingState, setNowPlayingState] = useState(true);
+  const [newlyArrived, setNewlyArrived] = useState<Movie[] | []>([]);
 
+  const [recentlyWatched, setRecentlyWatched] = useState<any[]>([]);
+  const [watchList, setWatchList] = useState<Movie[] | []>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([
     {
       id: "action",
@@ -46,6 +55,7 @@ const HomePage = () => {
         "https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?q=80&w=200&auto=format&fit=crop",
     },
   ]);
+  const navigate = useNavigate();
 
   const selectCategory = (id: string) => {
     setCategories(
@@ -55,58 +65,153 @@ const HomePage = () => {
       })),
     );
   };
+
+  const fetchNewlyArrived = async () => {
+    try {
+      const response = await movieSvc.newlyArrived(6);
+      const movies = normalizeMovies(response.detail.slice(2, 6));
+      setNewlyArrived(movies);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  const fetchRecentlyWatched = async () => {
+    try {
+      const response = await watchHistorySvc.fetchRecentWatches();
+      setRecentlyWatched(response.detail);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  const fetchWatchList = async () => {
+    try {
+      const response = await watchSvc.listMyWatchList();
+      const normalizedMovies: Movie[] = response.detail
+        .filter((item: any) => item?.movie?._id)
+        .map((item: any) => normalizeMovie(item.movie));
+      setWatchList(normalizedMovies);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  const fetchSuggested = async () => {
+    try {
+      const response = await movieSvc.suggested();
+      // setRecentlyWatched(response.detail);
+
+      console.log(response);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  const fetchforHome = async () => {
+    try {
+      const response = await movieSvc.home(6, "");
+      const moviesWithUrls = normalizeMovies(response.detail);
+      console.log(moviesWithUrls);
+    } catch (exception) {
+      console.log(exception);
+    }
+  };
+  useEffect(() => {
+    fetchforHome();
+    fetchNewlyArrived();
+    fetchSuggested();
+    fetchRecentlyWatched();
+    fetchWatchList();
+  }, []);
+
+  const latestWatched = recentlyWatched[0];
+  const recentlyWatchedMovies: Movie[] = Array.from(
+    new Map(
+      recentlyWatched
+        .filter((history) => history?.movie?._id)
+        .map((history) => {
+          const movie = normalizeMovie(history.movie);
+
+          return [movie._id, movie];
+        }),
+    ).values(),
+  );
+  const watchedMovie = latestWatched?.movie;
+
+  const progress =
+    latestWatched?.duration > 0
+      ? Math.min(
+          100,
+          Math.round((latestWatched.progress / latestWatched.duration) * 100),
+        )
+      : 0;
+
   return (
-    <div className="flex-1   flex flex-col   gap-4 overflow-hidden">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div
-        className="grid grid-cols-1 h-[100vh] lg:grid-cols-12 gap-4 overflow-y-auto p-3"
+        className="grid min-h-0 min-w-0 flex-1 grid-cols-1 content-start gap-4 overflow-x-hidden overflow-y-auto overscroll-y-contain p-3 lg:grid-cols-12"
         style={{
           scrollbarWidth: "none",
         }}
       >
         <Banner />
 
-        <div className="md:col-span-5 relative rounded-[24px] overflow-hidden bg-neutral-900 min-h-[320px] p-5 flex flex-col justify-between shadow-lg group ">
-          {/* Dune Background Thumbnail */}
+        <NavLink
+          to={"/watch/" + watchedMovie?._id}
+          className="md:col-span-5 relative rounded-[24px] overflow-hidden bg-neutral-900 min-h-[320px] p-5 flex flex-col justify-between shadow-lg group"
+        >
           <img
-            src="/images/dune.png"
-            alt="Dune Continue Watching"
-            className="absolute inset-0 w-full h-full object-cover filter contrast-125 brightness-75 group-hover:scale-105 transition-transform duration-700"
+            src={getBackendUrl(watchedMovie?.poster) ?? "/images/dune.png"}
+            alt={watchedMovie?.title || "Continue Watching"}
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover brightness-75 contrast-125 transition-transform duration-300 group-hover:scale-[1.03]"
           />
-          {/* <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" /> */}
 
-          {/* Card Header */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
+
           <div className="relative z-10">
             <h3 className="text-base font-bold text-white tracking-tight">
               Continue Watching
             </h3>
-            <p className="text-xs font-medium text-neutral-300">Dune</p>
+            <p className="text-xs font-medium text-neutral-300">
+              {watchedMovie?.title || "Discover something to watch"}
+            </p>
           </div>
 
-          {/* Watermark / Decorative text overlay */}
-          <div className="relative z-10 self-center opacity-30 text-xs font-widest uppercase tracking-widest text-white">
-            EPIC
-          </div>
-
-          {/* Card Footer Controls */}
           <div className="relative z-10 flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-medium text-neutral-300">
-              <button className="flex items-center gap-1.5 text-white font-semibold hover:text-red-400 transition-colors">
+              <button
+                disabled={!watchedMovie?._id}
+                onClick={() => {
+                  if (!watchedMovie?._id) return;
+
+                  navigate(`/player/${watchedMovie._id}`, {
+                    state: {
+                      resumeAt: latestWatched?.progress ?? 0,
+                    },
+                  });
+                }}
+                className="flex items-center gap-1.5 text-white font-semibold hover:text-red-400 transition-colors disabled:opacity-50"
+              >
                 <Play className="w-3.5 h-3.5 fill-white" />
                 <span>Resume</span>
               </button>
+
+              <span>{progress}% watched</span>
             </div>
 
-            {/* Progress Bar */}
             <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-              <div className="w-[70%] h-full bg-white rounded-full shadow-[0_0_8px_#ffffff]" />
+              <div
+                className="h-full bg-white rounded-full shadow-[0_0_8px_#ffffff] transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
-        </div>
+        </NavLink>
 
         <div className="md:col-span-4 bg-[#18191c] rounded-[24px] min-h-[320px]  flex flex-col justify-between shadow-lg  relative overflow-hidden group">
           {/* Header */}
           <div className="flex p-4 items-center justify-between z-10">
-            <h3 className="text-sm font-bold text-white">Top Pick for You</h3>
+            <h3 className="text-base font-bold text-white tracking-tight">
+              Top Pick For You
+            </h3>
           </div>
 
           {/* Deadpool Character Viewport */}
@@ -119,17 +224,35 @@ const HomePage = () => {
           </div>
         </div>
         <div className="lg:col-span-9">
-          <MovieSlider title="Newly Arrived" mapItems={3} MOVIES={MOVIES} />
+          <MovieSlider
+            title="Newly Arrived"
+            mapItems={3}
+            MOVIES={newlyArrived}
+          />
           <MovieSlider
             title="Suggested For You"
             mapItems={3}
             MOVIES={SuggestedMovies}
           />
+          {recentlyWatchedMovies.length > 0 && (
+            <MovieSlider
+              title="Recently Watched"
+              mapItems={3}
+              MOVIES={recentlyWatchedMovies}
+            />
+          )}
+          {watchList.length > 0 && (
+            <MovieSlider
+              title="Your Watch List"
+              mapItems={3}
+              MOVIES={watchList}
+            />
+          )}
         </div>
         <div className="lg:col-span-3 self-start sticky bottom-16 space-y-6">
           <Browse categories={categories} onSelectCategory={selectCategory} />
 
-          <div className="md:col-span-3 relative rounded-[24px] overflow-hidden bg-red-950 min-h-[320px] p-5 flex flex-col justify-between shadow-lg  group">
+          <div className="hidden md:block md:col-span-3 relative rounded-[24px] overflow-hidden bg-red-950 min-h-[320px] p-5  flex-col justify-between shadow-lg  group">
             {/* Asian Cinema Artwork (Red Theme Overlay) */}
             <img
               src="/images/inter.png"
@@ -211,7 +334,7 @@ interface BrowseProps {
 
 const Browse = ({ categories, onSelectCategory }: BrowseProps) => {
   return (
-    <div className="lg:col-span-3 bg-[#121316] rounded-[30px] p-3 flex flex-col justify-between shadow-md border border-white/80">
+    <div className="hidden md:block lg:col-span-3 bg-[#121316] rounded-[30px] p-3  flex-col justify-between shadow-md border border-white/80">
       <div>
         <h2 className="text-xl font-bold text-white m-3 tracking-tight">
           Browse
@@ -232,7 +355,9 @@ const Browse = ({ categories, onSelectCategory }: BrowseProps) => {
                 <img
                   src={cat.image}
                   alt={cat.name}
-                  className="w-12 h-12 rounded-full object-cover border border-black/5 shadow-sm"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-12 w-12 rounded-full border border-black/5 object-cover shadow-sm"
                 />
 
                 <div>
