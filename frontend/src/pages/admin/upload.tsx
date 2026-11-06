@@ -23,7 +23,7 @@ import {
 
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
-import { useForm } from "react-hook-form";
+import { Resolver, useForm } from "react-hook-form";
 import movieSvc from "@/services/movie.service";
 import toast from "react-hot-toast";
 
@@ -40,13 +40,14 @@ const MovieDTO = Yup.object({
   title: Yup.string().trim().required("Title is required"),
   releaseYear: Yup.string().required("Release year is required"),
   description: Yup.string().required("Description is required"),
-  mediaType: Yup.string(),
-  genre: Yup.string(),
-  maturity: Yup.string(),
-  imdbRating: Yup.string(),
-  backdrop: Yup.mixed().nullable(),
-  poster: Yup.mixed().nullable(),
+  mediaType: Yup.string().required(),
+  genre: Yup.string().required(),
+  maturity: Yup.string().required(),
+  imdbRating: Yup.string().default(""),
+  backdrop: Yup.mixed<File>().nullable().default(null),
+  poster: Yup.mixed<File>().nullable().default(null),
   video: Yup.mixed<File>()
+    .nullable()
     .required("Source video is required")
     .test(
       "video-file",
@@ -54,6 +55,32 @@ const MovieDTO = Yup.object({
       (value) => value instanceof File && /\.(mp4|mkv)$/i.test(value.name),
     ),
 });
+type MovieFormValues = {
+  title: string;
+  releaseYear: string;
+  description: string;
+  mediaType: string;
+  genre: string;
+  maturity: string;
+  imdbRating: string;
+  backdrop: File | null;
+  poster: File | null;
+  video: File | null;
+};
+
+const DEFAULT_VALUES: MovieFormValues = {
+  title: "",
+  releaseYear: "",
+  description: "",
+  mediaType: "Movie",
+  genre: "Sci-Fi",
+  maturity: "PG-13",
+  imdbRating: "",
+  backdrop: null,
+  poster: null,
+  video: null,
+};
+type MovieValidatedValues = Yup.InferType<typeof MovieDTO>;
 
 export default function AdminUpload() {
   const [activeTab, setActiveTab] = useState<"new" | "manage">("new");
@@ -100,20 +127,14 @@ export default function AdminUpload() {
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(MovieDTO),
-    defaultValues: {
-      title: "",
-      releaseYear: "",
-      description: "",
-      mediaType: "Movie",
-      genre: "Sci-Fi",
-      maturity: "PG-13",
-      imdbRating: "",
-      backdrop: null,
-      poster: null,
-      // video: null,
-    },
+    reset,
+  } = useForm<MovieFormValues, any, MovieValidatedValues>({
+    resolver: yupResolver(MovieDTO) as Resolver<
+      MovieFormValues,
+      any,
+      MovieValidatedValues
+    >,
+    defaultValues: DEFAULT_VALUES,
   });
 
   const showToast = (message: string) => {
@@ -135,7 +156,8 @@ export default function AdminUpload() {
     setCastList((current) => current.filter((actor) => actor !== name));
   };
 
-  const submitForm = async (data: any) => {
+  const submitForm = async (data: MovieValidatedValues) => {
+    if (isUploading) return;
     const formData = new FormData();
 
     Object.entries(data).forEach(([key, value]) => {
@@ -152,15 +174,29 @@ export default function AdminUpload() {
     setUploadProgress(0);
     try {
       const response = await movieSvc.create(formData, {
-        onProgress: setUploadProgress,
+        onProgress: (progress: number) => {
+          setUploadProgress(Math.min(100, Math.max(0, progress)));
+        },
       });
       console.log(response);
       setUploadProgress(100);
       if (response?.status === "MOVIE_CREATE_SUCCESS") {
         toast.success("Movie uploaded successfully");
+        reset(DEFAULT_VALUES);
+        setCastList([]);
+        setCastInput("");
+        setUploadProgress(0);
       }
-    } catch (exception) {
-      console.log(exception);
+    } catch (error: any) {
+      console.log(error);
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to upload movie. Please try again.",
+        {
+          duration: 5000,
+        },
+      );
     } finally {
       setIsUploading(false);
     }
