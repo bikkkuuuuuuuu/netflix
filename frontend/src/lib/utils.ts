@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { DateTime } from "luxon";
 import { Movie } from "@/types/data";
 
-const BACKEND_URL = "http://192.168.254.16:9005";
+const BACKEND_URL = "http://192.168.254.13:9005";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
