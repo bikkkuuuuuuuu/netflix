@@ -107,19 +107,19 @@ app.use("/api", (req, res) => {
   });
 });
 
-app.use(
-  express.static(frontendDir, {
-    index: false,
-    dotfiles: "deny",
-  }),
-);
+// app.use(
+//   express.static(frontendDir, {
+//     index: false,
+//     dotfiles: "deny",
+//   }),
+// );
 
 // React Router SPA fallback
-app.get("/{*splat}", (req, res, next) => {
-  res.sendFile(path.join(frontendDir, "index.html"), (error) => {
-    if (error) next(error);
-  });
-});
+// app.get("/{*splat}", (req, res, next) => {
+//   res.sendFile(path.join(frontendDir, "index.html"), (error) => {
+//     if (error) next(error);
+//   });
+// });
 
 app.use((req, res) => {
   res.status(404).json({
