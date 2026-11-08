@@ -5,6 +5,8 @@ const {
   ListObjectsV2Command,
   DeleteObjectsCommand,
 } = require("@aws-sdk/client-s3");
+const { Upload } = require("@aws-sdk/lib-storage");
+const { NodeHttpHandler } = require("@smithy/node-http-handler");
 
 const fs = require("node:fs/promises");
 const fsSync = require("node:fs");
@@ -37,9 +39,30 @@ class S3Storage {
       throw new Error("S3_BUCKET is not configured.");
     }
 
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+    if (!!accessKeyId !== !!secretAccessKey) {
+      throw new Error(
+        "AWS credentials are incomplete. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.",
+      );
+    }
     this.client = new S3Client({
       region: this.region,
-      // Uses the standard AWS credential provider chain.
+      ...(accessKeyId && secretAccessKey
+        ? {
+            credentials: {
+              accessKeyId,
+              secretAccessKey,
+            },
+          }
+        : {}),
+
+      maxAttempts: 5,
+      requestHandler: new NodeHttpHandler({
+        connectionTimeout: 30000,
+        socketTimeout: 120000,
+      }),
     });
 
     this.publicBaseUrl = (
@@ -126,24 +149,119 @@ class S3Storage {
   async uploadFile(filePath, key, contentType) {
     const extension = path.extname(filePath).toLowerCase();
 
-    await this.client.send(
-      new PutObjectCommand({
+    const fileStats = await fs.stat(filePath);
+
+    const upload = new Upload({
+      client: this.client,
+
+      params: {
         Bucket: this.bucket,
         Key: key,
+
         Body: fsSync.createReadStream(filePath),
+
+        ContentLength: fileStats.size,
+
         ContentType:
           contentType || MIME_TYPES[extension] || "application/octet-stream",
-      }),
-    );
+      },
 
-    return {
-      key,
-      url: this.getPublicUrl(key),
-    };
+      // Multipart upload configuration.
+      queueSize: 2,
+      partSize: 8 * 1024 * 1024,
+
+      // Abort incomplete multipart uploads on failure.
+      leavePartsOnError: false,
+    });
+
+    try {
+      const result = await upload.done();
+
+      return {
+        key,
+        url: this.getPublicUrl(key),
+        etag: result.ETag,
+        size: fileStats.size,
+      };
+    } catch (error) {
+      console.error(`[S3] Upload failed: ${key}`, {
+        message: error.message,
+        name: error.name,
+        code: error.Code || error.code,
+        statusCode: error.$metadata?.httpStatusCode,
+      });
+
+      throw new Error(`S3 upload failed for ${key}: ${error.message}`, {
+        cause: error,
+      });
+    }
   }
 
   // UPLOAD A COMPLETE DIRECTORY RECURSIVELY.
   // Uses batches to avoid overwhelming S3.
+
+  async getExistingObjects(prefix) {
+    const existingKeys = new Set();
+    let continuationToken;
+
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: `${prefix.replace(/\/+$/, "")}/`,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      for (const item of response.Contents || []) {
+        if (item.Key) {
+          existingKeys.add(item.Key);
+        }
+      }
+
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return existingKeys;
+  }
+
+  async uploadFileWithRetry(filePath, key, maxRetries = 5) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // uploadFile creates a fresh read stream on every attempt.
+        return await this.uploadFile(filePath, key);
+      } catch (error) {
+        const cause = error.cause || error;
+        const code = cause.code || cause.Code;
+        const statusCode = cause.$metadata?.httpStatusCode;
+
+        const retryable =
+          [
+            "ETIMEDOUT",
+            "ECONNRESET",
+            "ECONNREFUSED",
+            "EPIPE",
+            "EHOSTUNREACH",
+            "TimeoutError",
+            "NetworkingError",
+          ].includes(code) ||
+          (statusCode >= 500 && statusCode <= 599);
+
+        if (!retryable || attempt === maxRetries) {
+          throw error;
+        }
+
+        const delay = Math.min(2000 * 2 ** (attempt - 1), 30000);
+
+        console.warn(
+          `[S3] Retry ${attempt}/${maxRetries} for ${key}. ` +
+            `Error: ${code || error.message}. Waiting ${delay}ms`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
 
   async uploadDirectory(directory, prefix) {
     const files = [];
@@ -166,26 +284,78 @@ class S3Storage {
 
     await walk(directory);
 
+    const normalizedPrefix = prefix.replace(/\/+$/, "");
+
+    console.log(`[S3] Found ${files.length} local files`);
+
+    // Recover completed uploads from previous attempts.
+    const existingKeys = await this.getExistingObjects(normalizedPrefix);
+
+    console.log(`[S3] Found ${existingKeys.size} existing S3 objects`);
+
     const uploaded = [];
+    let skipped = 0;
 
-    for (let i = 0; i < files.length; i += 8) {
-      const batch = files.slice(i, i + 8);
+    const BATCH_SIZE = 3;
 
-      const results = await Promise.all(
+    for (let i = 0; i < files.length; i += BATCH_SIZE) {
+      const batch = files.slice(i, i + BATCH_SIZE);
+
+      const results = await Promise.allSettled(
         batch.map(async (filePath) => {
           const relativePath = path.relative(directory, filePath);
 
-          const key = [
-            prefix.replace(/\/$/, ""),
-            ...relativePath.split(path.sep),
-          ].join("/");
+          const key = [normalizedPrefix, ...relativePath.split(path.sep)].join(
+            "/",
+          );
 
-          return this.uploadFile(filePath, key);
+          // Preserve existing files and avoid uploading them again.
+          if (existingKeys.has(key)) {
+            skipped++;
+
+            return {
+              key,
+              url: this.getPublicUrl(key),
+              skipped: true,
+            };
+          }
+
+          const result = await this.uploadFileWithRetry(filePath, key, 5);
+
+          existingKeys.add(key);
+
+          return result;
         }),
       );
 
-      uploaded.push(...results);
+      const failures = results.filter((result) => result.status === "rejected");
+
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          uploaded.push(result.value);
+        }
+      }
+
+      const completed = uploaded.length;
+
+      console.log(
+        `[S3] Progress: ${completed}/${files.length} files ` +
+          `(${skipped} skipped)`,
+      );
+
+      if (failures.length > 0) {
+        console.error(
+          `[S3] Batch failed with ${failures.length} upload errors`,
+        );
+
+        throw failures[0].reason;
+      }
     }
+
+    console.log(
+      `[S3] Upload complete. Total: ${uploaded.length}, ` +
+        `Skipped: ${skipped}`,
+    );
 
     return uploaded;
   }
