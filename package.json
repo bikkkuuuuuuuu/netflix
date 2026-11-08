@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "scripts": {
+    "vercel-build": "npm --prefix frontend install && npm --prefix frontend run build && node -e \"const fs=require('fs');fs.rmSync('backend/public/app',{recursive:true,force:true});fs.mkdirSync('backend/public/app',{recursive:true});fs.cpSync('frontend/dist','backend/public/app',{recursive:true});\""
+  }
+}

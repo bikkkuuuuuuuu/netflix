@@ -46,29 +46,22 @@ app.use(
   }),
 );
 
-const publicDir = path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
+const publicDir =
+  process.env.VERCEL === "1"
+    ? path.resolve(__dirname, "../../public")
+    : path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
+// const publicDir = path.resolve(process.env.LOCAL_STORAGE_PATH || "./public");
 const moviesDir = path.join(publicDir, "movies");
 const uploadsDir = path.join(publicDir, "uploads");
 const frontendDir = path.join(publicDir, "app");
 
+app.get("/", (_req, res) => {
+  res.status(200).send("NETFLIX API ROOT V2");
+});
+
 app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "ok",
-  });
-});
-
-app.get("/", (_req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Netflix Backend API is running",
-    deployment: "VERCEL-FIX-V2",
-  });
-});
-
-app.get("/__deploy-check", (_req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Correct Express application loaded",
     version: "V2",
   });
 });
@@ -137,8 +130,6 @@ app.use("/api", (req, res) => {
 //   });
 // });
 
-
-
 if (process.env.VERCEL !== "1") {
   app.use(
     express.static(frontendDir, {
@@ -148,12 +139,9 @@ if (process.env.VERCEL !== "1") {
   );
 
   app.get("/{*splat}", (req, res, next) => {
-    res.sendFile(
-      path.join(frontendDir, "index.html"),
-      (error) => {
-        if (error) next(error);
-      },
-    );
+    res.sendFile(path.join(frontendDir, "index.html"), (error) => {
+      if (error) next(error);
+    });
   });
 }
 
