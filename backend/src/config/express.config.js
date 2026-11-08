@@ -55,10 +55,6 @@ const moviesDir = path.join(publicDir, "movies");
 const uploadsDir = path.join(publicDir, "uploads");
 const frontendDir = path.join(publicDir, "app");
 
-app.get("/", (_req, res) => {
-  res.status(200).send("NETFLIX API ROOT V2");
-});
-
 app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "ok",
