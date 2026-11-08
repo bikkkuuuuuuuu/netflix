@@ -57,6 +57,22 @@ app.get("/health", (_req, res) => {
   });
 });
 
+app.get("/", (_req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Netflix Backend API is running",
+    deployment: "VERCEL-FIX-V2",
+  });
+});
+
+app.get("/__deploy-check", (_req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Correct Express application loaded",
+    version: "V2",
+  });
+});
+
 // app.use("/movies/:id/images", (req, res, next) => {
 //   const movieDir = path.join(publicDir, "movies", req.params.id, "images");
 
@@ -120,6 +136,26 @@ app.use("/api", (req, res) => {
 //     if (error) next(error);
 //   });
 // });
+
+
+
+if (process.env.VERCEL !== "1") {
+  app.use(
+    express.static(frontendDir, {
+      index: false,
+      dotfiles: "deny",
+    }),
+  );
+
+  app.get("/{*splat}", (req, res, next) => {
+    res.sendFile(
+      path.join(frontendDir, "index.html"),
+      (error) => {
+        if (error) next(error);
+      },
+    );
+  });
+}
 
 app.use((req, res) => {
   res.status(404).json({
