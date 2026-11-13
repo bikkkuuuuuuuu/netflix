@@ -21,6 +21,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 const HomePage = () => {
   const [nowPlayingState, setNowPlayingState] = useState(true);
   const [newlyArrived, setNewlyArrived] = useState<Movie[] | []>([]);
+  const [suggestedMovies, setSuggestedMovies] = useState<Movie[] | []>([]);
 
   const [recentlyWatched, setRecentlyWatched] = useState<any[]>([]);
   const [watchList, setWatchList] = useState<Movie[] | []>([]);
@@ -99,7 +100,13 @@ const HomePage = () => {
       const response = await movieSvc.suggested();
       // setRecentlyWatched(response.detail);
 
-      console.log(response);
+      const result = response?.detail;
+      if (result.length > 2) {
+        const normalizedMovies = normalizeMovies(result);
+        setSuggestedMovies(normalizedMovies);
+      } else {
+        setSuggestedMovies(SuggestedMovies);
+      }
     } catch (exception) {
       console.log(exception);
     }
@@ -217,7 +224,7 @@ const HomePage = () => {
           {/* Deadpool Character Viewport */}
           <div className="absolute h-full w-full flex items-center justify-center">
             <img
-              src="/images/spiderman.png"
+              src="/images/poster.png"
               alt="Deadpool"
               className="h-full object-cover filter w-full  transition-transform duration-500"
             />
@@ -232,7 +239,7 @@ const HomePage = () => {
           <MovieSlider
             title="Suggested For You"
             mapItems={3}
-            MOVIES={SuggestedMovies}
+            MOVIES={suggestedMovies}
           />
           {recentlyWatchedMovies.length > 0 && (
             <MovieSlider
@@ -255,7 +262,7 @@ const HomePage = () => {
           <div className="hidden md:block md:col-span-3 relative rounded-[24px] overflow-hidden bg-red-950 min-h-[320px] p-5  flex-col justify-between shadow-lg  group">
             {/* Asian Cinema Artwork (Red Theme Overlay) */}
             <img
-              src="/images/inter.png"
+              src="/images/interstellar.webp"
               alt="Now Playing Poster"
               className="absolute inset-0 w-full h-full object-cover filter contrast-125 brightness-75 scale-105 transition-transform duration-700"
             />

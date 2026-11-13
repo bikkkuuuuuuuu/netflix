@@ -14,7 +14,6 @@ import {
   Search,
   Settings2,
   Trash2,
-  Tv,
   Upload,
   X,
   CheckCircle2,
@@ -26,6 +25,7 @@ import {
 import {
   ImageUploader,
   InputType,
+  MovieUploader,
   SelectField,
   TextAreaField,
   TextInputField,
@@ -34,6 +34,15 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import * as Yup from "yup";
+
+interface DraftItem {
+  id: string;
+  title: string;
+  type: "Movie" | "TV Show";
+  size: string;
+  progress: number;
+  status: "Draft" | "Uploading" | "Ready";
+}
 type Episode = {
   id: string;
   episodeNumber: number;
@@ -192,6 +201,12 @@ export default function SeriesUpload() {
   const [activeSeasonId, setActiveSeasonId] = useState("season-1");
   const [expandedEpisodes, setExpandedEpisodes] = useState<string[]>(["ep-3"]);
 
+  const [castInput, setCastInput] = useState("");
+
+  const [castList, setCastList] = useState<string[]>([
+    "Timothée Chalamet",
+    "Zendaya",
+  ]);
   const [title] = useState("Stranger Things");
   const [description] = useState(
     "When a young boy disappears, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.",
@@ -203,6 +218,32 @@ export default function SeriesUpload() {
   const [maturity] = useState("TV-14");
   const [rating] = useState("8.7");
   const [seriesStatus] = useState("ONGOING");
+  const [drafts, setDrafts] = useState<DraftItem[]>([
+    {
+      id: "d-1",
+      title: "Dune: Part Two",
+      type: "Movie",
+      size: "14.2 GB",
+      progress: 100,
+      status: "Ready",
+    },
+    {
+      id: "d-2",
+      title: "Severance — Season 2",
+      type: "TV Show",
+      size: "3.8 GB",
+      progress: 45,
+      status: "Uploading",
+    },
+    {
+      id: "d-3",
+      title: "Cyberpunk: Edgerunners",
+      type: "TV Show",
+      size: "2.1 GB",
+      progress: 0,
+      status: "Draft",
+    },
+  ]);
 
   const MovieDTO = Yup.object({
     title: Yup.string().trim().required("Title is required"),
@@ -241,13 +282,6 @@ export default function SeriesUpload() {
       // video: null,
     },
   });
-  const [cast, setCast] = useState([
-    "Millie Bobby Brown",
-    "Finn Wolfhard",
-    "David Harbour",
-    "Winona Ryder",
-  ]);
-  const [castInput, setCastInput] = useState("");
 
   const [activeTab, setActiveTab] = useState<"details" | "seasons">("details");
 
@@ -352,14 +386,20 @@ export default function SeriesUpload() {
     );
   };
 
-  const addCast = () => {
-    const value = castInput.trim();
-    if (!value || cast.includes(value)) return;
+  const addCastMember = () => {
+    const name = castInput.trim();
 
-    setCast((current) => [...current, value]);
+    if (!name || castList.includes(name)) {
+      return;
+    }
+
+    setCastList((current) => [...current, name]);
     setCastInput("");
   };
 
+  const removeCastMember = (name: string) => {
+    setCastList((current) => current.filter((actor) => actor !== name));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -373,7 +413,7 @@ export default function SeriesUpload() {
       maturity,
       rating,
       seriesStatus,
-      cast,
+      castList,
       seasons,
       artwork,
     };
@@ -480,7 +520,7 @@ export default function SeriesUpload() {
           {/* LEFT */}
           <main className="min-w-0 space-y-4 xl:col-span-8">
             {/* Navigation */}
-            <div className="flex gap-1 overflow-x-auto rounded-xl border border-white/[0.04] bg-[#121316] p-1">
+            <div className="flex gap-1 justify-around overflow-x-auto rounded-xl border border-white/[0.04] bg-[#121316] p-1">
               <button
                 type="button"
                 onClick={() => setActiveTab("details")}
@@ -711,55 +751,53 @@ export default function SeriesUpload() {
                 </section>
 
                 {/* Cast */}
-                <Section
-                  title="Cast & crew"
-                  description="People associated with this series."
-                  icon={Clapperboard}
-                >
+                <section className="rounded-3xl bg-[#121316] p-5">
+                  <div className="mb-5">
+                    <h2 className="text-sm font-semibold text-white">Cast</h2>
+                  </div>
+
                   <div className="flex gap-2">
-                    <input
-                      className={inputClass}
-                      placeholder="Add actor or creator..."
-                      value={castInput}
-                      onChange={(e) => setCastInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCast();
-                        }
-                      }}
+                    <TextInputField
+                      type={InputType.TEXT}
+                      name="castInput"
+                      control={control}
+                      placeholder="Actor or creator name"
+                      errMsg=""
                     />
+
                     <button
                       type="button"
-                      onClick={addCast}
-                      className="flex h-11 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.1]"
+                      onClick={addCastMember}
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
+                      border border-white/[0.07] bg-white/[0.04] text-neutral-300
+                      transition hover:bg-white/[0.08] hover:text-white"
                     >
-                      <Plus size={17} />
+                      <Plus className="h-4 w-4" />
                     </button>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {cast.map((person) => (
-                      <div
-                        key={person}
-                        className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-[#0d0e10] px-3 py-2 text-xs text-neutral-300"
-                      >
-                        {person}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCast((current) =>
-                              current.filter((item) => item !== person),
-                            )
-                          }
-                          className="text-neutral-600 hover:text-white"
+                  {castList.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {castList.map((actor) => (
+                        <div
+                          key={actor}
+                          className="flex items-center gap-2 rounded-lg border border-white/[0.06]
+                          bg-[#0f1012] px-3 py-2 text-xs text-neutral-300"
                         >
-                          <X size={13} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </Section>
+                          <span>{actor}</span>
+
+                          <button
+                            type="button"
+                            onClick={() => removeCastMember(actor)}
+                            className="text-neutral-600 transition hover:text-neutral-300"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
 
                 <div className="flex justify-end">
                   <button
@@ -836,7 +874,7 @@ export default function SeriesUpload() {
 
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Field label="Season name">
-                          <input
+                          {/* <input
                             className={inputClass}
                             value={activeSeason.title}
                             onChange={(e) =>
@@ -848,11 +886,18 @@ export default function SeriesUpload() {
                                 ),
                               )
                             }
+                          /> */}
+                          <TextInputField
+                            name="seName"
+                            control={control}
+                            placeholder="Season One"
+                            // className="bg-[#0d0e10]"
+                            errMsg=""
                           />
                         </Field>
 
                         <Field label="Season number">
-                          <input
+                          {/* <input
                             type="number"
                             min="1"
                             className={inputClass}
@@ -869,6 +914,13 @@ export default function SeriesUpload() {
                                 ),
                               )
                             }
+                          /> */}
+                          <TextInputField
+                            name="seNumber"
+                            control={control}
+                            placeholder="1"
+                            // className="bg-[#0d0e10]"
+                            errMsg=""
                           />
                         </Field>
                       </div>
@@ -992,91 +1044,122 @@ export default function SeriesUpload() {
                                 <div className="space-y-4 border-t border-white/[0.06] p-4">
                                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <Field label="Episode number">
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        className={inputClass}
-                                        value={episode.episodeNumber}
-                                        onChange={(e) =>
-                                          updateEpisode(episode.id, {
-                                            episodeNumber: Number(
-                                              e.target.value,
-                                            ),
-                                          })
-                                        }
+                                      <TextInputField
+                                        name="epNumber"
+                                        control={control}
+                                        placeholder="1"
+                                        errMsg=""
                                       />
                                     </Field>
 
                                     <div className="sm:col-span-2">
                                       <Field label="Episode title">
-                                        <input
-                                          className={inputClass}
+                                        <TextInputField
+                                          name="epTitle"
+                                          control={control}
                                           placeholder="Chapter One"
-                                          value={episode.title}
-                                          onChange={(e) =>
-                                            updateEpisode(episode.id, {
-                                              title: e.target.value,
-                                            })
-                                          }
+                                          errMsg=""
                                         />
                                       </Field>
                                     </div>
                                   </div>
 
                                   <Field label="Episode description">
-                                    <textarea
-                                      rows={3}
-                                      className={`${inputClass} resize-none`}
-                                      placeholder="Describe this episode..."
-                                      value={episode.description}
-                                      onChange={(e) =>
-                                        updateEpisode(episode.id, {
-                                          description: e.target.value,
-                                        })
-                                      }
+                                    <TextAreaField
+                                      rows={4}
+                                      name="description"
+                                      control={control}
+                                      placeholder="Describe this episode"
                                     />
                                   </Field>
 
                                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <Field label="Duration">
-                                      <input
-                                        className={inputClass}
+                                      <TextInputField
+                                        name="duration"
+                                        control={control}
                                         placeholder="45 min"
-                                        value={episode.duration}
-                                        onChange={(e) =>
-                                          updateEpisode(episode.id, {
-                                            duration: e.target.value,
-                                          })
-                                        }
+                                        errMsg=""
                                       />
                                     </Field>
-
-                                    <Field label="Source media">
-                                      <label className="flex h-11 cursor-pointer items-center gap-2 overflow-hidden rounded-xl border border-white/[0.07] bg-[#121316] px-3 text-xs text-neutral-400 transition hover:bg-white/[0.04]">
-                                        <Upload
-                                          size={14}
-                                          className="shrink-0"
-                                        />
-                                        <span className="truncate">
-                                          {episode.file?.name || "Choose video"}
-                                        </span>
-                                        <input
-                                          type="file"
-                                          accept="video/mp4,video/x-matroska,.mkv,.mp4"
-                                          hidden
-                                          onChange={(e) => {
-                                            const file =
-                                              e.target.files?.[0] ?? null;
-
-                                            updateEpisode(episode.id, {
-                                              file,
-                                              status: "Draft",
-                                            });
-                                          }}
-                                        />
-                                      </label>
-                                    </Field>
                                   </div>
+
+                                  <div className="mb-5 flex items-center gap-3 border-b border-white/[0.06] p-4">
+                                    <HardDrive className="h-4 w-4 text-neutral-400" />
+
+                                    <div>
+                                      <h2 className="text-sm font-semibold text-white">
+                                        Source media
+                                      </h2>
+
+                                      <p className="mt-0.5 text-sm text-neutral-600">
+                                        Upload the original source used for
+                                        transcoding.
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <MovieUploader
+                                    control={control}
+                                    name="video"
+                                    setError={setError}
+                                    errMsg={errors.video?.message as string}
+                                    maxSizeGB={20}
+                                  />
+
+                                  {/* Upload progress */}
+                                  {/* {isUploading && (
+                                      <section className="rounded-2xl border border-white/[0.06] bg-[#121316] p-5">
+                                        <div className="mb-3 flex items-center justify-between">
+                                          <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04]">
+                                              <Upload className="h-4 w-4 text-neutral-300" />
+                                            </div>
+
+                                            <div>
+                                              <p className="text-sm font-medium text-white">
+                                                Uploading source media
+                                              </p>
+                                              <p className="mt-1 text-xs text-neutral-500">
+                                                Keep this page open while the
+                                                upload is in progress.
+                                              </p>
+                                            </div>
+                                          </div>
+
+                                          <span className="text-sm font-medium tabular-nums text-white">
+                                            {uploadProgress}%
+                                          </span>
+                                        </div>
+
+                                        <div
+                                          className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]"
+                                          role="progressbar"
+                                          aria-label="Movie upload progress"
+                                          aria-valuemin={0}
+                                          aria-valuemax={100}
+                                          aria-valuenow={uploadProgress}
+                                        >
+                                          <div
+                                            className="h-full rounded-full bg-red-500 transition-[width] duration-200 ease-out"
+                                            style={{
+                                              width: `${uploadProgress}%`,
+                                            }}
+                                          />
+                                        </div>
+
+                                        <div className="mt-2 flex justify-between text-xs text-neutral-500">
+                                          <span>
+                                            {uploadProgress >= 100
+                                              ? "Upload sent"
+                                              : "Transferring file"}
+                                          </span>
+                                          <span>
+                                            Please don't close this page
+                                          </span>
+                                        </div>
+                                      </section>
+                                    )} */}
 
                                   {episode.file && (
                                     <div className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
@@ -1150,110 +1233,141 @@ export default function SeriesUpload() {
           <aside className="min-w-0 space-y-4 xl:col-span-4">
             {/* Series preview */}
             <section className="overflow-hidden rounded-2xl border border-white/[0.04] bg-[#121316]">
-              <div className="relative flex h-36 items-center justify-center bg-[#1c1d21]">
-                {artwork.backdrop ? (
-                  <div className="absolute inset-0 flex items-center justify-center p-3">
-                    <ImageIcon size={25} className="text-neutral-500" />
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <ImageIcon size={25} className="mx-auto text-neutral-600" />
-                    <p className="mt-2 text-[10px] text-neutral-600">
-                      Series backdrop preview
-                    </p>
-                  </div>
-                )}
-
-                <span className="absolute right-3 top-3 rounded-md bg-black/50 px-2 py-1 text-[10px] text-neutral-300">
-                  LIVE PREVIEW
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                <h2 className="text-sm font-semibold text-white">
+                  Series preview
+                </h2>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">
+                  Catalog
                 </span>
               </div>
 
-              <div className="p-5">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-20 w-14 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
-                    <Tv size={21} className="text-neutral-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold">
+              <div className="p-4">
+                <div className="relative aspect-video overflow-hidden rounded-xl bg-[#1c1d21]">
+                  {artwork.backdrop ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <ImageIcon size={22} className="text-neutral-600" />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                      <ImageIcon size={22} className="text-neutral-600" />
+                      <span className="text-[10px] text-neutral-600">
+                        No backdrop uploaded
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-lg font-semibold text-white">
                       {title || "Untitled series"}
-                    </h3>
-                    <p className="mt-1 text-[11px] text-neutral-500">
-                      {releaseYear || "Year"} · {genre} · {maturity}
                     </p>
-                    <p className="mt-2 text-xs text-amber-400">
-                      ★ {rating || "N/A"}
+                    <p className="mt-1 text-[11px] text-neutral-300">
+                      {releaseYear || "Year"} · {genre || "Genre"} ·{" "}
+                      {maturity || "Rating"}
                     </p>
                   </div>
                 </div>
 
-                <p className="mt-4 line-clamp-3 text-xs leading-5 text-neutral-500">
-                  {description || "Your series description will appear here."}
+                <p className="mt-4 line-clamp-3 text-xs leading-5 text-neutral-400">
+                  {description || "Series synopsis will appear here."}
                 </p>
 
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-white/[0.06] pt-4">
-                  <span className="text-[11px] text-neutral-400">
-                    {seasons.length} Seasons
-                  </span>
-                  <span className="text-neutral-700">·</span>
-                  <span className="text-[11px] text-neutral-400">
-                    {totalEpisodes} Episodes
-                  </span>
-                  <span className="text-neutral-700">·</span>
-                  <span className="text-[11px] text-neutral-400">
-                    {seriesStatus}
+                <div className="mt-4 flex items-center gap-4 border-t border-white/[0.06] pt-3 text-xs text-neutral-400">
+                  <span>{seasons.length} Seasons</span>
+                  <span>{totalEpisodes} Episodes</span>
+                  <span className="ml-auto text-emerald-400">
+                    {readyEpisodes}/{totalEpisodes} Ready
                   </span>
                 </div>
               </div>
             </section>
 
             {/* Upload queue */}
-            <Section
-              title="Upload overview"
-              description="Episode source files and processing."
-              icon={Upload}
-            >
-              <div className="space-y-3">
-                {seasons
-                  .flatMap((season) =>
-                    season.episodes.map((episode) => ({
-                      ...episode,
-                      seasonNumber: season.seasonNumber,
-                    })),
-                  )
-                  .filter(
-                    (episode) => episode.file || episode.status !== "Draft",
-                  )
-                  .map((episode) => (
-                    <div key={episode.id} className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
-                        <FileVideo size={15} className="text-neutral-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium text-neutral-300">
-                          S{String(episode.seasonNumber).padStart(2, "0")}E
-                          {String(episode.episodeNumber).padStart(2, "0")} ·{" "}
-                          {episode.title || "Untitled"}
-                        </p>
-                        <p className="mt-1 text-[10px] text-neutral-600">
-                          {episode.file?.name || "Source not attached"}
-                        </p>
-                      </div>
-                      <Status status={episode.status} />
-                    </div>
-                  ))}
+            <section className="rounded-3xl bg-[#121316] p-5">
+              <div className="mb-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Layers className="h-4 w-4 text-neutral-400" />
 
-                {!seasons.some((season) =>
-                  season.episodes.some(
-                    (episode) => episode.file || episode.status !== "Draft",
-                  ),
-                ) && (
-                  <p className="py-5 text-center text-xs text-neutral-600">
-                    No active uploads yet.
-                  </p>
-                )}
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">
+                      Upload queue
+                    </h2>
+
+                    <p className="mt-0.5 text-sm text-neutral-600">
+                      Current uploads and saved drafts.
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-xs tabular-nums text-neutral-600">
+                  {drafts.length}
+                </span>
               </div>
-            </Section>
+
+              <div className="space-y-2">
+                {drafts.map((item) => (
+                  <div key={item.id} className="rounded-xl bg-[#0f1012] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-xs font-medium text-neutral-200">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-1 text-[12px] text-neutral-600">
+                          {item.type} · {item.size}
+                        </p>
+                      </div>
+
+                      <span className="shrink-0 text-[12px] text-neutral-600">
+                        {item.progress}%
+                      </span>
+                    </div>
+
+                    {item.progress > 0 && item.progress < 100 && (
+                      <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+                        <div
+                          className="h-full rounded-full bg-neutral-400"
+                          style={{
+                            width: `${item.progress}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-3">
+                      <span className="text-[12px] text-neutral-600">
+                        {item.status}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDrafts((current) =>
+                            current.filter((draft) => draft.id !== item.id),
+                          );
+                        }}
+                        className="flex items-center gap-1.5 text-[12px] text-neutral-600 transition hover:text-neutral-300"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                // onClick={() => showToast("Publishing ready titles")}
+                className="mt-4 w-full rounded-xl border border-white/[0.07]
+                    bg-white/[0.03] py-3 text-xs font-medium text-neutral-300
+                    transition hover:bg-white/[0.07] hover:text-white"
+              >
+                Publish ready titles
+              </button>
+            </section>
 
             {/* Storage */}
             <section className="rounded-3xl bg-[#121316] p-6">

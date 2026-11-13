@@ -115,7 +115,7 @@ const LogInPage = () => {
     <section className="min-h-screen bg-[#121316] flex flex-wrap">
       <div className="hidden lg:block lg:w-[62%] relative overflow-hidden">
         <img
-          src="/images/bg.png"
+          src="/images/bg.jpg"
           alt="Featured content"
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -190,7 +190,7 @@ const LogInPage = () => {
                   </label>
                 </div>
                 <NavLink
-                  to="#"
+                  to="/auth/forgot-password"
                   className="text-blue-600 font-medium text-sm hover:underline"
                 >
                   Forgot Password?

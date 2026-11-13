@@ -294,8 +294,6 @@ class MovieService {
 
     // 3. Get candidate movies.
     const candidates = await MovieModel.find({
-      published: true,
-
       _id: { $nin: watchedMovieIds },
     })
       .sort({

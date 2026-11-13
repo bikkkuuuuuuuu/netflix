@@ -104,8 +104,11 @@ export const getBackendUrl = (path: string) => {
 
 export const normalizeMovie = (movie: Movie): Movie => ({
   ...movie,
-  poster: getBackendUrl(movie?.poster as string) ?? "",
-  backdrop: getBackendUrl(movie?.backdrop as string),
+  // poster: getBackendUrl(movie?.poster as string) ?? "",
+  poster: `http://localhost:1100/movies/${movie._id}/images/poster.jpg`,
+  // backdrop: getBackendUrl(movie?.backdrop as string),
+  backdrop: `http://localhost:1100/movies/${movie._id}/images/backdrop.jpg`,
+
   logo: getBackendUrl(movie?.logo as string),
   video: {
     ...movie.video,

@@ -15,8 +15,8 @@ export const MOVIES: Movie[] = [
     cast: [],
     directors: [],
     writers: [],
-    poster: "/images/ladybug.png",
-    backdrop: "/images/ladybug.png",
+    poster: "/images/ladybug.jpg",
+    backdrop: "/images/ladybug.jpg",
     logo: null,
     trailerUrl: null,
     video: {
@@ -91,8 +91,8 @@ export const MOVIES: Movie[] = [
     cast: [],
     directors: [],
     writers: [],
-    poster: "/images/spiderman.png",
-    backdrop: "/images/spiderman.png",
+    poster: "/images/spiderman.jpg",
+    backdrop: "/images/spiderman.jpg",
     logo: null,
     trailerUrl: null,
     video: {
@@ -170,8 +170,8 @@ export const SuggestedMovies: Movie[] = [
     cast: [],
     directors: [],
     writers: [],
-    poster: "/images/inter.png",
-    backdrop: "/images/inter.png",
+    poster: "/images/interstellar.webp",
+    backdrop: "/images/interstellar.webp",
     logo: null,
     trailerUrl: null,
     video: {
@@ -208,8 +208,8 @@ export const SuggestedMovies: Movie[] = [
     cast: [],
     directors: [],
     writers: [],
-    poster: "/images/spiderverse.png",
-    backdrop: "/images/spiderverse.png",
+    poster: "/images/poster.png",
+    backdrop: "/images/poster.png",
     logo: null,
     trailerUrl: null,
     video: {

@@ -7,7 +7,7 @@ interface IntroVideoProps {
 
 export default function IntroVideo({
   onComplete,
-  src = "/videos/cinematic-intro.mp4",
+  src = "/videos/intro.mp4",
 }: IntroVideoProps) {
   const completedRef = useRef(false);
 

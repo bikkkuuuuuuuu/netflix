@@ -490,33 +490,6 @@ export default function AdminUpload() {
                   maxSizeGB={20}
                 />
 
-                {/* {isUploading && (
-  <div className="space-y-2">
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-neutral-400">
-        Uploading movie...
-      </span>
-
-      <span className="text-xs font-medium text-white tabular-nums">
-        {uploadProgress}%
-      </span>
-    </div>
-
-    <div
-      className="h-1.5 overflow-hidden rounded-full bg-white/10"
-      role="progressbar"
-      aria-label="Movie upload progress"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={uploadProgress}
-    >
-      <div
-        className="h-full rounded-full bg-red-500 transition-[width] duration-200"
-        style={{ width: `${uploadProgress}%` }}
-      />
-    </div>
-  </div>
-)} */}
                 {/* Upload progress */}
                 {isUploading && (
                   <section className="rounded-2xl border border-white/[0.06] bg-[#121316] p-5">

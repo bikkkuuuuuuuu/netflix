@@ -10,7 +10,7 @@ export default function Banner(img: { img?: string }) {
         <div className="relative h-full overflow-hidden -ml-12 border-r border-red-500/20">
           <div className="absolute inset-0  transition-transform duration-700 ">
             <img
-              src={img.img ?? "/images/stranger.png"}
+              src={img.img ?? "/images/banner.webp"}
               alt="Steve Harrington"
               className="w-full h-full object-cover filter contrast-125 saturate-150 brightness-75"
             />

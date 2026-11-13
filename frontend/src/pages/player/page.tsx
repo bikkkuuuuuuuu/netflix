@@ -882,7 +882,7 @@ const Player = () => {
       {showIntro && (
         <IntroVideo
           onComplete={handleIntroComplete}
-          src="/videos/cinematic-intro.mp4"
+          src="/videos/intro.mp4"
         />
       )}
 
